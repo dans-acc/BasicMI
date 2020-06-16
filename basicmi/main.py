@@ -1,16 +1,15 @@
 import os
 import json
 
-from basicmi import tools
-
 import pandas as pd
 import numpy as np
 import scipy.io as sio
 import matplotlib as plt
 
+from basicmi import tools
 
 print('*' * 100)
-print(tools.get_basicmi_dp().absolute())
+tools.get_session_dirs()
 print('*' * 100)
 
 # Get the data directory path.
