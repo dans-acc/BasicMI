@@ -34,5 +34,20 @@ def get_session_dirs(session_pat='S*/[adjusted|Session]*'):
     return paths
 
 
-def get_epochs():
+def get_class_mats(dir_path, class_pat='*[Bimanual|Left|Right]*'):
+
+    # Check that paths are valid.
+    if dir_path is None or class_pat is None:
+        return
+
+    # Get the class paths to the mat files.
+    class_mat_paths = [class_mat for class_mat in dir_path.glob(class_pat)]
+    return class_mat_paths
+
+
+def get_epochs(mat=None):
+
+    # The mat file cannot be none.
+    if mat is None:
+        return None
     pass
