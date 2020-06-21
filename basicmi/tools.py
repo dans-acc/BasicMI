@@ -2,6 +2,41 @@ import pathlib
 import scipy.io as sio
 
 
+def get_proj_path():
+
+    # Get the path to this file.
+    path = pathlib.Path(__file__)
+    if path is None:
+        return
+
+    # Get the project root directory.
+    return pathlib.Path(path.parent.parent)
+
+
+def get_proj_sub_path(sub_path='basicmi'):
+
+    # Get the projects root directory path.
+    proj_path = get_proj_path()
+    if proj_path is None or sub_path is None:
+        return
+
+    # Get a sub path of the project directory.
+    return pathlib.Path(proj_path.joinpath(sub_path))
+
+
+def get_matched_paths(root_path, pat='S*/[adjusted|Session]*'):
+
+    # Check that the root path is a directory.
+    if root_path is None or not root_path.is_dir():
+        return
+
+    # Match all sub paths.
+    paths = [pathlib.Path(path) for path in root_path.glob(pat)]
+    return paths
+
+
+
+"""
 def get_basicmi_dp():
 
     # Get the path to the tools file.
@@ -78,4 +113,4 @@ def get_epochs(mat=None):
     # Get the associated epochs.
     pass
 
-
+"""
