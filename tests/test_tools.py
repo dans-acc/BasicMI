@@ -1,3 +1,7 @@
+import pathlib
+
+import scipy.io as sio
+
 from basicmi import tools
 
 # Test function for obtaining the root path.
@@ -19,3 +23,9 @@ print('*-' * 50)
 session_paths = tools.get_matched_paths(data_path, pat='S*/[Session|adjusted]*')
 print(session_paths)
 print('*-' * 50)
+
+# Test the ability to remove bad paths.
+for session_path in session_paths:
+    bss_path = pathlib.Path(session_path.joinpath('brainstormstudy.mat'))
+    bss_mat = sio.loadmat(bss_path)
+    print(bss_mat.get('BadTrials'))
