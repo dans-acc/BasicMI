@@ -43,8 +43,17 @@ def get_good_paths(all_paths, bad_paths):
     elif not all_paths or not bad_paths:
         return list(all_paths)
 
-    # Remove all of the bad paths.
+    # Make a copy of all the paths.
     good_paths = list(all_paths)
+
+    # Remove the bad paths from the good paths.
+    for i in range(len(good_paths) - 1, -1, -1):
+        path = good_paths[i]
+        for bad_path in bad_paths:
+            if path.match(bad_path):
+                del good_paths[i]
+
+    # Return a new list of good paths.
     return good_paths
 
 
