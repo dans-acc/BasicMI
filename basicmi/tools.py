@@ -35,7 +35,17 @@ def get_matched_paths(root_path, pat='S*/[adjusted|Session]*'):
     return paths
 
 
+def get_good_paths(all_paths, bad_paths):
 
+    # Lists must be present; if either is empty, return all.
+    if all_paths is None or bad_paths is None:
+        return None
+    elif not all_paths or not bad_paths:
+        return list(all_paths)
+
+    # Remove all of the bad paths.
+    good_paths = list(all_paths)
+    return good_paths
 
 
 """
