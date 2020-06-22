@@ -1,6 +1,34 @@
-from basicmi import dataset
+import pathlib
 
-dataset.get_all_epochs()
+from basicmi import dataset
+from basicmi import tools
+
+# Get a random session from listed paths.
+session = dataset.SESSION_DIR_PATHS[0]
+print(session)
+
+dataset.get_session_epochs(session_path=session,
+                           epoch_class='*Left*')
+
+"""
+
+# Get the list of bad file names associated with the session.
+bss_items = tools.get_mat_items(mat_path=pathlib.Path(session.joinpath('brainstormstudy.mat')),
+                                mat_keys=['BadTrials'])
+print(bss_items)
+print(type(bss_items['BadTrials']))
+
+# Get a class from the data set.
+lefts = tools.get_dir_paths(dir_path=session,
+                            regex='*Left*',
+                            only_files=True,
+                            bad_files=bss_items['BadTrials'])
+
+# Print the lefts.
+for left in lefts:
+    print(left)
+    
+"""
 
 """
 Filter the epochs appropriately;

@@ -53,7 +53,7 @@ def get_dir_paths(dir_path, regex='*', only_files=False, bad_files=None):
 
     # Check that the dir path is valid.
     if dir_path is None or not dir_path.is_dir():
-        return None
+        raise NotADirectoryError('dir_path is None or not a directory.')
 
     # Read all paths within the directory.
     paths = dir_path.glob(regex)
@@ -61,7 +61,7 @@ def get_dir_paths(dir_path, regex='*', only_files=False, bad_files=None):
         paths = [path for path in paths if path.is_file() and not path.is_dir()]
 
     # If no bad files are defined, return all paths.
-    if not bad_files or len(bad_files) == 0:
+    if bad_files is None or not bad_files.any():
         return paths
     else:
 
