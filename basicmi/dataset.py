@@ -31,7 +31,7 @@ def get_session_epochs(session_path, epoch_class='*', transpose=True):
     # Get the epochs from the dataset.
     for epoch_path in epoch_class_paths:
         trial_items = tools.get_mat_items(mat_path=epoch_path,
-                                    mat_keys=['F'])
+                                          mat_keys=['F'])
         trial_df = pd.DataFrame(trial_items['F']).transpose()
         print(trial_df)
 
