@@ -1,5 +1,7 @@
 import pathlib
 
+import pandas as pd
+
 from basicmi import tools
 
 
@@ -8,7 +10,7 @@ SUBJECT_DIR_PATHS = tools.get_matching_paths(from_path=tools.DATA_DIR_PATH, patt
 SESSION_DIR_PATHS = tools.get_matching_paths(from_path=tools.DATA_DIR_PATH, pattern='S*/[Session|adjusted]*')
 
 
-def get_session_epochs(session_path, epoch_class='*', transpose=False):
+def get_session_epochs(session_path, epoch_class='*', transpose=True):
 
     # Check that the session path is valid.
     if session_path is None or not session_path.is_dir():
@@ -27,11 +29,11 @@ def get_session_epochs(session_path, epoch_class='*', transpose=False):
                                             bad_files=bss_items['BadTrials'])
 
     # Get the epochs from the dataset.
-
-    # Print the classes for the user.
-    for clas in epoch_class_paths:
-        print('HERE!')
-        print(clas)
+    for epoch_path in epoch_class_paths:
+        trial_items = tools.get_mat_items(mat_path=epoch_path,
+                                    mat_keys=['F'])
+        trial_df = pd.DataFrame(trial_items['F']).transpose()
+        print(trial_df)
 
 
 def get_all_epochs(session_paths=SESSION_DIR_PATHS, epoch_class='*', transpose=False):
