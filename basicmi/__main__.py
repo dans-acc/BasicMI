@@ -1,5 +1,9 @@
+import os
 import pathlib
 
+import mne
+import numpy as np
+import pandas as pd
 import scipy.io as sio
 
 
@@ -50,14 +54,14 @@ def get_mat_items(mat_path, mat_keys=None):
         return {key: mat_file.get(key) for key in mat_keys}
 
 
-def get_dir_paths(dir_path, only_files=False, bad_files=None):
+def get_dir_paths(dir_path, regex='*', only_files=False, bad_files=None):
 
     # Check that the dir path is valid.
     if dir_path is None or not dir_path.is_dir():
         return None
 
     # Read all paths within the directory.
-    paths = dir_path.glob('*')
+    paths = dir_path.glob(regex)
     if only_files:
         paths = [path for path in paths if path.is_file() and not path.is_dir()]
 
@@ -70,22 +74,44 @@ def get_dir_paths(dir_path, only_files=False, bad_files=None):
         return [path for path in paths if path.name not in bad_files]
 
 
+def get_epochs(session_paths):
+
+    # Get epochs for each of the sessions.
+    for session in session_paths:
+        pass
+
+"""
+Filter the epochs appropriately;
+Recreate the models.
+Filter the epochs using 'improved' technique.
+Recreate the models.
+Generate phase locking values (?)
+Recreate the models.
+Create the CNN for the dataset.
+"""
+
+
 # Project directories.
 ROOT_DIR_PATH = get_proj_path()
 DATA_DIR_PATH = get_proj_sub_path('data')
-
-test_paths = get_dir_paths(ROOT_DIR_PATH, bad_files=['README.md', 'setup.py'])
-for tp in test_paths:
-    print(tp)
 
 # Session paths.
 SUBJECT_DIR_PATHS = get_matching_paths(DATA_DIR_PATH, pattern='S*')
 SESSION_DIR_PATHS = get_matching_paths(DATA_DIR_PATH, pattern='S*/[Session|adjusted]*')
 
+test_paths = get_dir_paths(ROOT_DIR_PATH, bad_files=['README.md', 'setup.py'])
+for tp in test_paths:
+    print(tp)
+
 for session_path in SESSION_DIR_PATHS:
-    bss = get_matching_paths(session_path, pattern='brainstormstudy.mat')
-    mat = get_mat_items(bss[0], ['BadTrials'])
-    print(mat)
+
+    lefts = get_dir_paths(session_path, regex='*Left*', only_files=True)
+    for left in lefts:
+        items = get_mat_items(left, ['F'])
+        epochs = np.array(items['F'])
+        epochs_df = pd.DataFrame(epochs).transpose()
+        epochs_df.plot()
+        print((epochs_df))
 
 """
 import os
