@@ -1,14 +1,9 @@
 import pathlib
 
+import eeglearn
+
 from basicmi import dataset
 from basicmi import tools
-
-# Get a random session from listed paths.
-session = dataset.SESSION_DIR_PATHS[0]
-print(session)
-
-dataset.get_session_epochs(session_path=session,
-                           epoch_class='*Left*')
 
 """
 
