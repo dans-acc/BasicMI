@@ -1,0 +1,50 @@
+Paper: LEARNING REPRESENTATIONS FROM EEG WITH DEEP RECURRENT-CONVOLUTIONAL NEURAL NETWORKS
+
+Aimed at extracting features whilst accounting for inter-subject invariants.
+
+A deep recurrent convectional neural network trained on EEG movie.
+
+ConvNets are used for extracting spatial and spectral invariants (for each frame).
+
+Why are LSTMs used for extracting temporal features?
+
+Most important features are from the frequency domain.
+ - Usually studied using a spectrogram of the signal.
+ - EEG has an additional spatial domain.
+
+Fast Fourier Transform (FFT) is performed on the time series for each trial to estimate the power spectrum of the signal.
+ - Oscillatory cortical activity related to memory operations primarily exists in three frequency bands of theta (4-7Hz), alpha (8-13Hz), and beta (13-30Hz)
+ - Sum of squared absolute values within each of the three frequency bands was computed and used as separate measurement for each electrode.
+ - TODO: What are the frequency bands that we are concerned with.
+
+Forming a feature vector ignores the inherent structure of the data in space, frequency and time.
+ - Instead, transform the measurements into a 2D image to preserve the spatial structure; and
+ - Use multiple colour channels to represent the spectral dimension; finally
+ - Use the sequence of images derived from consecutive time windows to account for temporal evolutions in brain activity.
+
+Width and height of the image represent the spatial distribution of activities over the cortex.
+
+The EEG electrodes are distributed over the scalp in a three-dimensional space. In order to trans- form the spatially
+distributed activity maps as 2-D images, we need to first project the location of electrodes from a 3-dimensional space onto a 2-D surface.
+ - Should also preserve the relative distance between neighboring electrodes.
+ - Use the Azimuthal Equidistant Projection (AEP) also known as Polar Projection.
+ - A drawback of this method is that the distances between the points on the map are only preserved with respect to a
+ single point (the center point) and therefore the relative distances between all pairs of electrodes will not be exactly preserved.
+    - TODO: Is there any way to overcome this? Use a CNN on 3D images?
+ - Applying AEP to 3-D electrode locations, we obtain 2-D projected locations of electrodes.
+ - apply Clough- Tocher scheme (Alfeld, 1984) for interpolating the scattered power measurements over the scalp and for
+  estimating the values in-between the electrodes over a 32 × 32 mesh.
+ - This procedure is repeated for each frequency band of interest, resulting in three topographical activity maps corresponding to each frequency band.
+    - TODO: What are the main frequency bands of interest?
+ - The three spatial maps are then merged together to form an image with three (color) channels. (Input for the CNN).
+
+Novelty resides in transforming raw EEG into sequence of images, or frames (EEG ”movie”), combined with recurrent-convolutional
+network architecture applied on top of such transformed EEG data
+
+ARCHITECTURE:
+
+ConvNets were used to deal with variations in space and frequency domains due to their ability to learn good two-dimensional representation of the data.
+ - Wherever needed, the extracted representa- tions were fed into another layer to account for temporal variations in the data.
+
+We evaluated various types of layers used for extracting temporal patterns, including convolutional and recurrent layers.
+ -
