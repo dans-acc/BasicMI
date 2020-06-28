@@ -170,3 +170,150 @@ Tem- poral maxpool selects the highest activation across the frames whereas feat
 Choosing the maximum value over multiple time frames is not necessarily the best practice when dealing with brain activity time series as it will potentially ignore the periods of inactivation in some cortical regions.
  - This effect partially observable when computing the average of activities over all the frames;
  - It also partially explains lower classification errors when temporal dynamic models (1D-conv and LSTM) are added to the network.
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Paper: Convolutional Neural Network Based Approach Towards Motor Imagery Tasks EEG Signals Classification
+
+A methodology based on Deep Convolutional Neural Networks (DCNN) for MI.
+ - The proposed method first transforms the input EEG signals into images by applying the time-frequency (T-F) approaches.
+ - The used T-F approaches are short-time-Fourier- transform (STFT) and continuous-wavelet-transform (CWT).
+ - After T-F transformation the images of MI-tasks EEG signals are applied to the DCNN stage.
+
+TODO: Include this within the report.
+BCIs exploit the electrical activity in the brain of the handicapped patients who have lost their abilities due to severe injuries.
+Brain activities related to MI tasks can be captured through various acquisition methods.
+ - Among these procurement methods, Electroencephalogram (EEG) is considered as most substantial for non-invasive BCI systems, owing to its excellent temporal resolution, usability, non-invasiveness, portability, and low set-up costs.
+ - System utilizes the brain activity of the disabled person and tries to assist and map their sensory- motor functions.
+ - MI is one of the most frequently used mental strategy in BCI applications that deals with carrying out a motor task merely by thinking or imagining.
+ - MI stands out from the rest of the BCI systems due to its biggest advantage of independence of any body movement, which itself resolves one of the major difficulty.
+
+Improvement in the classification performance of MI signals remains to be a critical issue for the advancement of BCI systems.
+ - The feasibility of these systems relies on their accuracy and efficiency.
+
+A brain-machine interface (BMI) system has been designed using SVM classifier to regulate a robotic arm.
+
+In the current framework, the utility of time-frequency representation (TFR) methods is examined on a CNN model, for the classification of the right hand (RH) and right foot (RF) MI tasks based EEG signals.
+ - The considered TFR methods are short-time Fourier transform (STFT) continuous wavelet transform (CWT).
+
+The CNN architecture that has been exploited is Alexnet. It is composed of a total of 8 layers, comprising 5 convolutional layers and 3 fully connected layers.
+ - This work adopts transfer learning where the last two layers are discharged and replaced with new layers to solve the required purpose.
+
+METHODOLOGY!
+
+Relevant EEG signals are given as input to TF representations.
+ - TFR techniques allow us to represent the 1-D EEG signals as 2-D images.
+ - The TFR methods under consideration are STFT and CWT.
+ - Both of these methods allow effective characterization of the signal in both time and frequency domains.
+ - They basically transform the 1D EEG signals into 2D time-frequency images. They have already been applied in numerous problems for various purposes.
+
+
+Following the transformation through TFR, MI-based EEG signals are displayed as images. These images are then fed into CNN for feature extraction and classification.
+
+METHODOLOGY - DATASET:
+
+The sampling frequency of recorded EEG signals is 1000 Hz, further it is down-sampled to 100 Hz, followed by bandpass filtering.
+ - This was done to eliminate any contaminations and residues from the recorded EEG data.
+
+METHODOLOGY - SHORT TIME FOURIER TRANSFORM (STFT)
+
+A TF representation captures the variation of the spectral content of a signal over time.
+ - One such most basic yet sophisticated technique is STFT;
+ - It is an advanced Fourier analysis technique that presents a signal in a way that it can be completely estimated in both domains.
+ - It is primarily used for the representation of properties of non-stationary signals.
+ - STFT uses a window function to take off a portion of the time domain signal and then identifies various properties of the signal by applying Fourier transform onto the cut-out portion.
+ - It can be visualized as symmetric, identical bandpass filters evenly spaced in frequency.
+
+METHODOLOGY - CWT
+
+Another such effective TFR method is CWT which provides an over-complete description of a signal.
+ - It presents signals as a linear combination of principle or basis functions called wavelets, which are localized in time or space.
+ - It allows localized signal content to be analyzed.
+ - A wavelet is a finite- energy, zero-average function which indicates that it is an oscillating bandpass function.
+
+METHODOLOGY - CNN
+
+Deep learning aims at identifying various levels of distributed representations.
+ - attempts to automate the signal classification process.
+
+Deep learning algorithms are categorized as follows: CNN, Sparse Coding, Auto encoder, and Restricted Boltzmann Machines.
+ - Inspired by the biological system, the CNN is counted as one of the most renowned technique of deep learning that involves vigorous training of multiple layers for feature extrac- tion and classification purpose.
+    - It differs from the traditional algorithms in a manner where the network “learns” to extract features and classify, instead of manual operation.
+    - It works on transfer learning where the model trained on one task is reused for the second task.
+    - The basic idea behind this technique is the embodiment of spatial information between pixels of a given input image of the network.
+
+CNN Architecture:
+ - Embodies a special combination of an input layer, multiple hidden layers, and an output layer;
+ - Each of these layers has a unique objective of processing the information received from the preceding layer;
+ - The feature detection and extraction is carried out in the hidden layers using a series of convolution and pooling procedures.
+ - These convolution and pooling layers are enclosed sequentially to formulate high- level features.
+ - Therefore, it can be described as a hierarchical neural network composed of convolutional layers alternating with pooling layers, further succeeded by some fully connected layers.
+    - Each layer is defined and the network is trained and used continuously.
+    - These steps are repeated until the desired accuracy is obtained.
+    - The whole network is trained by adopting the conventional back-propagation algo- rithm where the error is back propagated to boost the classification.
+
+ - CONVOLUTION LAYER:
+    - This layer is composed of a series of filters, also known as kernels or edge detectors whose coefficients are tuned in the course of the training procedure;
+    - With a fixed number of filters in each layer, each individual filter is convolved transversely with the width and height of the input figure in the forward transmits.
+    - The output of this layer is a two-dimensional feature map of that filter to detect the pattern;
+    - This is followed by a Rectified linear unit (ReLu) where the non-linearity is increased in the network using a rectified function;
+
+ - POOLING LAYER:
+    - Succeeding the convolution layer is the pooling layer where the main objective is reduction of network parameters and dimensionality of feature maps while conserving useful information.
+    - It creates a non- linear down-sampling by merging nearby values in the feature space through various operators.
+    - The number of parameters and hence, the computation in the network is reduced by minimizing the spatial size of the input, allowing the network to go deeper.
+    - It is translation invariant and also regulates over-fitting.
+    - These hidden layers are succeeded by a fully connected layer that acts as the classifier for the formerly extracted features.
+
+ - FULLY CONNECTED LAYER:
+    - It feeds forwards the neural net- work by converting the 2D feature map into a 1D feature vector;
+    - Scores are calculated for each category which is then converted into probabilities by a softmax layer.
+    - Lastly, the classification layer allocates a probable class or category to the object on the basis of the algorithm.
+
+With the recent surge of CNN schemes, some well-known deep learning CNN models or pre-trained networks have
+emerged like LeNet, ZF Net, GoogLeNet, AlexNet and many more.
+ - Transfer learning employs such pre-trained networks as reference model to train own model.
+ - It involves the transfer of previously learned knowledge from one domain to another domain, for feature extraction and classification tasks.
+ - It effectively performs deep learning by fine-tuning of model parameters.
+    - This procedure is usually much faster than the conventional training of CNN model with random weights.
+ - The most widely known out of all is AlexNet and left a huge impact on the machine learning domain.
+    - This compelling CNN architecture is formed of 8 layers that comprise of 5 convolution layers and 3 fully connected layers.
+    - It is trained on ImageNet and is employed for image classification.
+
+RESULTS AND DISCUSSION
+
+TODO: Using the former technique, use an AlexNet implementation.
+
+At first, TF representation of the EEG signal is estimated using spectrograms and scalogram obtained through STFT and CWT, respectively.
+ - This is assessed taking Hamming window under consideration.
+ - he block length is taken as 120, therefore the window function is of length 120 units;
+ - Amount of overlap allowed between adjacent blocks, i.e. the number of overlapping is limited to 100 units.
+ - Each block is zero- padded to a length of 200 units.
+ - All the simulation work is done considering sampling frequency as 100 Hz.
+ - A CWT filter bank is created using Morse wavelet.
+ - Observing the TFR of both, it can be concluded that CWT gives higher time-frequency resolution compared to STFT;
+ - STFT provides a constant resolution over the entire spectrum.
+ - As it was mentioned earlier, both STFT and CWT images were resized to 227 × 227 × 3.
+ - These were used as input to DCNN model for feature extraction and classification purpose.
+ - In DCNN based Alexnet model, first and second convolutional layers have 96 and 256 filters of size 11 × 11 × 3 and 5 × 5 × 48 respectively.
+ - The max pooling layer follows the first two convolutional layers;
+ - Layers 3, 4 and 5 follow on similar lines. The input to first fully connected layer is a 13 × 13 × 128 vector which is multiplied with a matrix to give an output of 1 × 2048 configuration.
+ - Layers 7 and 8 follow on similar lines. Transfer learning is employed to fine-tune the pre-trained network Alexnet.
+ - The last two layers are discharged for adaptation and replaced with new layers to learn features unique to the used dataset.
+ - They are fine- tuned for MI tasks based EEG signal recognition where the number of classes is two (RH and RF). Then, the features abstracted from the trained images are used to classify the test images.
+
+80% of input data has been utilized for training the Alexnet model and the residual 20% has been employed for testing the fine-tuned model.
+ - The learning rate is set to 0.0001 for fine-tuning of the DCNN model. The maximum epoch is set to 15 and total 1830 iterations were carried out for the training procedure. Thus, 122 iterations are performed per epoch.
+
+CWT yields better results as compared to STFT. The classification accuracy obtained using CWT is 0.66% higher as compared to STFT. Also, the error or the misclassification rate using CWT is mere 0.65% which is almost negligible.
+ - CWT is more accurate and effective for the task of discrimination of RH and RF MI EEG signals. Though the specificity obtained using both the techniques is 100%, the sensitivity achieved is again better using CWT.
+ - CWT is more reliable for identification of RH tasks.
+
+Thus, utilization of T-F transformations for reconstruction of EEG signals into images combined with deep learning AlexNet model empowers as a robust approach. It is highly productive and can be definitely employed for the betterment of disabled people.
+
+CWT images may have more distinctive features for EEG signals than the STFT method.
