@@ -1,12 +1,22 @@
 import pathlib
 
 import mne
+import eeglearn
+import eeglearn.eeg_cnn_lib as eeglib
 import scipy.io as sio
 
 # Commonly used paths relative to the tools.py file.
 PROJ_DIR_PATH = pathlib.Path(pathlib.Path(__file__).parent.parent)
-DATA_DIR_PATH = pathlib.Path(PROJ_DIR_PATH.joinpath('data'))
-MI_DATA_DIR_PATH = pathlib.Path(DATA_DIR_PATH.joinpath('mi'))
+PROJ_DATA_DIR_PATH = pathlib.Path(PROJ_DIR_PATH.joinpath('data'))
+PROJ_MI_DATA_DIR_PATH = pathlib.Path(PROJ_DATA_DIR_PATH.joinpath('mi'))
+
+
+# Installed MNE dir path.
+MNE_DIR_PATH = pathlib.Path(mne.__file__)
+
+# Montages and layouts define 3D and 2D electrode positions, respectively.
+MNE_LAYOUTS_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/layouts'))
+MNE_MONTAGES_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/montages'))
 
 
 def get_subj_epochs(subj_id, preload=True, equalise_events_ids=None):
@@ -16,7 +26,7 @@ def get_subj_epochs(subj_id, preload=True, equalise_events_ids=None):
         return None
 
     # Get the subject path.
-    subj_path = pathlib.Path(MI_DATA_DIR_PATH.joinpath('S%d//epochs_epo.fif' % subj_id))
+    subj_path = pathlib.Path(PROJ_MI_DATA_DIR_PATH.joinpath('S%d//epochs_epo.fif' % subj_id))
     if not subj_path.exists() or not subj_path.is_file() or subj_path.is_dir():
         return None
 
@@ -63,4 +73,24 @@ def concat_epochs(epochs, add_offset=False, equalise_event_ids=None):
         concat.equalize_event_counts(event_ids=equalise_event_ids)
 
     return concat
+
+
+def extract_montage():
+    # Montage files contain the 3D coordinates of the cap.
+    pass
+
+
+def extract_data(epochs):
+
+    # Get the epoch data as Trials x Channels x Samples; get the trial epoch class labels.
+    if epochs is not None:
+        return epochs.get_data(), epochs.events[:, 2]
+    return None, None
+
+
+
+
+
+
+
 
