@@ -1,8 +1,6 @@
 import pathlib
 
 import mne
-import eeglearn
-import eeglearn.eeg_cnn_lib as eeglib
 import scipy.io as sio
 
 # Commonly used paths relative to the tools.py file.
@@ -75,9 +73,27 @@ def concat_epochs(epochs, add_offset=False, equalise_event_ids=None):
     return concat
 
 
-def extract_montage():
-    # Montage files contain the 3D coordinates of the cap.
-    pass
+def get_montage(mne_montage='biosemi64'):
+    return mne.channels.make_standard_montage(kind=mne_montage)
+
+
+def set_epoch_montage(epoch, montage, copy=True):
+
+    # Check epoch and montage are present.
+    if epoch is None or montage is None:
+        raise ValueError('Epoch or montage parameters are none.')
+
+    # Potentially copy to avoid side-effects.
+    if copy:
+        epoch = epoch.copy()
+        montage = montage.copy()
+
+    # Apply the montage and return [the copies].]
+    epoch.set_montage(montage=montage)
+    return epoch, montage
+
+
+
 
 
 def extract_data(epochs):
