@@ -317,3 +317,65 @@ CWT yields better results as compared to STFT. The classification accuracy obtai
 Thus, utilization of T-F transformations for reconstruction of EEG signals into images combined with deep learning AlexNet model empowers as a robust approach. It is highly productive and can be definitely employed for the betterment of disabled people.
 
 CWT images may have more distinctive features for EEG signals than the STFT method.
+
+========================================================================================================================================================================================================================================================================
+
+Paper: https://github.com/colah/Conv-Nets-Series/blob/master/part1.md
+
+convolutional neural networks can be thought of as a kind of neural network that uses many identical copies of the same neuron.
+ - allows the network to have lots of neurons and express computationally large models while keeping the number of actual parameters -- the values describing how neurons behave -- that need to be learned fairly small.
+ - Convolutional neural networks are just one type of neural network that uses the more general trick, weight-tying;
+
+STRUCTURE OF A CNN
+
+The simplest way to try and classify them with a neural network is to just connect them [samples] all to a fully-connected layer.
+
+There are a bunch of different neurons, and every input connects to every neuron.
+
+A more sophisticated approach notices a kind of symmetry in the properties it's useful to look for in the data.
+ - We care a lot about local properties of the data: What frequency of sounds are there around a given time? Are they increasing or decreasing? And so on.
+ - We care about the same properties at all points in time.
+ - It's useful to know the frequencies at the beginning, it's useful to know the frequencies in the middle, and it's also useful to know the frequencies at the end.
+ - that these are local properties, in that we only need to look at a small window of the sample in order to determine them.
+
+Thus,
+ - So, we can create a group of neurons, $A$, that look at small time segments of our data;
+ - $A$ looks at all such segments, computing certain features;
+ - Then, the output of this convolutional layer is fed into a fully-connected layer, $F$.
+ - Groups of neurons, like $A$, that appear in multiple places are sometimes called modules, and networks that use them are sometimes called modular neural networks.
+    - (A's are the convolution layers);
+
+One very nice property of convolutional layers is that they're composable. You can feed the output of one convolutional layer into another.
+With each layer, the network can detect higher-level, more abstract features.
+
+Convolutional layers are often interweaved with pooling layers. In particular, there is a kind of layer called a max-pooling layer that is extremely popular.
+ - from a high level perspective, we don't care about the precise point in time a feature is present. If a shift in frequency occurs slightly earlier or later, does it matter?
+ - A max-pooling layer takes the maximum of features over small blocks of a previous layer.
+ - The output tells us if a feature was present in a region of the previous layer, but not precisely where.
+ - Max-pooling layers kind of "zoom out". They allow later convolutional layers to work on larger sections of the data, because a small patch after the pooling layer corresponds to a much larger patch before it. They also make us invariant to some very small transformations of the data.
+
+Convolutional layers can work on higher-dimensional data as well. In fact, the most famous successes of convolutional neural networks are applying 2D convolutional neural networks to recognizing images.
+ - In a 2-dimensional convolutional layer, instead of looking at segments, $A$ will now look at patches.
+
+For each patch, $A$ will compute features. For example, it might learn to detect the presence of an edge. Or it might learn to detect a texture. Or perhaps a contrast between two colors.
+
+What this really boils down to is that, when considering an entire image, we don't care about the exact position of an edge, down to a pixel. It's enough to know where it is to within a few pixels.
+
+TODO: If the image used for training the CNN is increased in dimensions, will it result in better classification rates?
+
+In traditional convolutional layers, $A$ is a bunch of neurons in parallel, that all get the same inputs and compute different features.
+ - For example, in a 2-dimensional convolutional layer, one neuron might detect horizontal edges, another might detect vertical edges, and another might detect green-red color contrasts.
+
+That said, in the recent paper 'Network in Network' (Lin et al. (2013)), a new "Mlpconv" layer is proposed. In this model, $A$ would have multiple layers of neurons, with the final layer outputting higher level features for the region.
+In the paper, the model achieves some very impressive results, setting new state of the art on a number of benchmark datasets.
+
+RESULTS  OF CNNs
+
+They used a new kind of neuron (ReLUs) and a new technique to reduce a problem called 'overfitting' (DropOut).
+
+Remember that the neurons are randomly initialized.
+
+The convolution operation is a powerful tool.
+ - In part because of its role in PDEs, convolution is very important in the physical sciences;
+ -  it will allow us to create much more efficient implementations of convolutional layers than the naive perspective might suggest;
+ -
