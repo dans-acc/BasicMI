@@ -3,6 +3,7 @@ import logging
 
 import mne
 import EEGLearn.utils as eeg_utils
+import numpy as np
 import scipy.io as sio
 
 
@@ -144,7 +145,7 @@ def set_epochs_mne_montage(epochs, kind, new=False):
     return epochs, montage
 
 
-def extract_epoch_data_or_labels(epochs, data=True, labels=True):
+def get_epoch_data_or_labels(epochs, data=True, labels=True):
 
     epoch_data, epoch_labels = None, None
     if epochs is not None:
@@ -156,14 +157,17 @@ def extract_epoch_data_or_labels(epochs, data=True, labels=True):
     return epoch_data, epoch_labels
 
 
-def extract_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=2):
+def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=2):
 
     if epochs is None or freq_bands is None:
         return None
     elif not freq_bands:
         return []
 
-    # The feature matrix.
+    # The labels for the epochs.
+    _, labels = get_epoch_data_or_labels(epochs=epochs, data=False)
+
+    # Feature matrix by band and electrode order (theta_1, theta_2, ..., theta_n, ..., alpha_n, ..., beta_n).
     features_mtx = []
 
     # Calculate the power spectral density within specific bands.
@@ -175,8 +179,17 @@ def extract_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=2):
         if psds is None or freqs is None:
             return None
 
-        # Arrange the features in band and electrode order (theta_1, theta_2, ..., theta_n, ..., alpha_n, ..., beta_n)
-        # TODO: what does it mean by '7 time windows'
+        # Transpose the psds to shape of (n_channels, n_epochs, n_freqs)
+        psds = psds.transpose([1, 0, 2])
+        for channel in psds:
+
+            feature_vect = []
+            for epoch in channel:
+                pass
+
+            # Last column contains the classification.
+            feature_vect.append() # TODO: we have to loop by index in order to obtain the class from the extracted labels.
+            features_mtx.append(feature_vect)
 
     # Return the feature matrix.
     return features_mtx

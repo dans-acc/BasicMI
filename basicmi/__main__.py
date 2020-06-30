@@ -26,12 +26,15 @@ if __name__ == '__main__':
 
     # Get the subject data.
     subj_epochs = proj_epochs[1]
-    subj_data, subj_labels = tools.extract_epoch_data_or_labels(epochs=subj_epochs, data=False)
+    subj_data, subj_labels = tools.get_epoch_data_or_labels(epochs=subj_epochs, data=False)
 
     print('±' * 200)
     print(subj_data)
     print(subj_labels)
     print('±' * 200)
+
+    freq_bands = [(4, 8)]
+    feature_mtx = tools.get_epochs_psd_features(subj_epochs, 0, 5, freq_bands=freq_bands)
 
     # Get the neuroscan montage locations.
     neuroscan_coords = tools.get_neuroscan_montage(azim=True)
