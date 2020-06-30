@@ -2,7 +2,7 @@ import pathlib
 import logging
 
 import mne
-import EEGLearn as eegl
+import EEGLearn.utils as eeg_utils
 import scipy.io as sio
 
 # tools.py file path - used as a reference point.
@@ -91,6 +91,31 @@ def concat_epochs(epochs, add_offset=False, equalise_event_ids=None):
     return concat
 
 
+def get_neuroscan_montage(azim=False):
+
+    # Get the location to the neuroscan montage path.
+    neuroscan_path = pathlib.Path(PROJ_MONTAGES_DIR_PATH.joinpath('nauroscan_montage.mat'))
+    if not neuroscan_path.exists() or not neuroscan_path.is_file() or neuroscan_path.is_dir():
+        return None
+
+    # Get the 3D coordinates within the mat file.
+    neuroscan_items = get_mat_items(mat_path=neuroscan_path, mat_keys=['A'])
+    if neuroscan_items is None:
+        return None
+
+    # Get the neuroscan 3d coords.
+    neuroscan_3d_coords = neuroscan_items['A']
+    if not azim:
+        return neuroscan_3d_coords
+
+    # Convert the 3D coords into 2D coords and return.
+    neuroscan_2d_coords = []
+    for coord in neuroscan_3d_coords:
+        neuroscan_2d_coords.append(eeg_utils.azim_proj(coord))
+
+    return neuroscan_2d_coords
+
+
 def get_mne_montage(kind):
 
     if kind is None:
@@ -117,6 +142,9 @@ def set_epochs_mne_montage(epochs, kind, new=False):
 
     # Return the epochs instance and the loaded montage.
     return epochs, montage
+
+
+# TODO: Define a function for extracting features from the epochs.
 
 
 def extract_data(epochs):
