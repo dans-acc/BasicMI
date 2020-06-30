@@ -94,7 +94,7 @@ def concat_epochs(epochs, add_offset=False, equalise_event_ids=None):
 def get_neuroscan_montage(azim=False):
 
     # Get the location to the neuroscan montage path.
-    neuroscan_path = pathlib.Path(PROJ_MONTAGES_DIR_PATH.joinpath('nauroscan_montage.mat'))
+    neuroscan_path = pathlib.Path(PROJ_MONTAGES_DIR_PATH.joinpath('neuroscan_montage.mat'))
     if not neuroscan_path.exists() or not neuroscan_path.is_file() or neuroscan_path.is_dir():
         return None
 
@@ -144,7 +144,8 @@ def set_epochs_mne_montage(epochs, kind, new=False):
     return epochs, montage
 
 
-# TODO: Define a function for extracting features from the epochs.
+def extract_epochs_features(epochs):
+    pass
 
 
 def extract_data(epochs):

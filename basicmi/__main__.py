@@ -11,12 +11,9 @@ if __name__ == '__main__':
     proj_epochs = tools.get_proj_epochs(subj_ids=[1, 2, 3],
                                         equalise_event_ids=['Left', 'Right', 'Bimanual'])
 
-    # Get the subj epochs; set the montage.
-    subj_epochs = proj_epochs[1]
-    tools.set_epochs_mne_montage(epochs=subj_epochs, kind='mgh70')
-
-    print('±' * 100)
-    print(subj_epochs.info)
+    # Get the neuroscan montage locations.
+    neuroscan_coords = tools.get_neuroscan_montage(azim=True)
+    print(neuroscan_coords)
 
 """
 
