@@ -1,100 +1,23 @@
-import pathlib
-
-import eeglearn
-
-from basicmi import dataset
-from basicmi import tools
-
-"""
-
-# Get the list of bad file names associated with the session.
-bss_items = tools.get_mat_items(mat_path=pathlib.Path(session.joinpath('brainstormstudy.mat')),
-                                mat_keys=['BadTrials'])
-print(bss_items)
-print(type(bss_items['BadTrials']))
-
-# Get a class from the data set.
-lefts = tools.get_dir_paths(dir_path=session,
-                            regex='*Left*',
-                            only_files=True,
-                            bad_files=bss_items['BadTrials'])
-
-# Print the lefts.
-for left in lefts:
-    print(left)
-    
-"""
-
-"""
-Filter the epochs appropriately;
-Recreate the models.
-Filter the epochs using 'improved' technique.
-Recreate the models.
-Generate phase locking values (?)
-Recreate the models.
-Create the CNN for the dataset.
-"""
-
-
-"""
-for session in SESSION_DIR_PATHS:
-    get_session_epochs(session)
-
-test_paths = get_dir_paths(ROOT_DIR_PATH, bad_files=['README.md', 'setup.py'])
-for tp in test_paths:
-    print(tp)
-"""
-
-"""
-for session_path in SESSION_DIR_PATHS:
-
-    lefts = get_dir_paths(session_path, regex='*Left*', only_files=True)
-    for left in lefts:
-        items = get_mat_items(left, ['F'])
-        epochs = np.array(items['F'])
-        epochs_df = pd.DataFrame(epochs).transpose()
-        epochs_df.plot()
-        print((epochs_df))
-"""
-
-"""
-import os
-import json
-
-import pathlib
-
-import pandas as pd
-import numpy as np
-import scipy.io as sio
-import matplotlib as plt
+import mne
 
 from basicmi import tools
 
-print('*' * 100)
-paths = tools.get_session_dirs()
-print(paths)
-print('*' * 100)
 
-for session in paths:
-    classes = tools.get_class_mats(session)
-    print(classes)
+subj_epochs = tools.get_proj_epochs(subj_ids=[1],
+                                    equalise_events_ids=['Left', 'Right', 'Bimanual'])
 
+print(type(subj_epochs[1]))
 
-# Get the data directory path.
-FILE_PATH = pathlib.Path(__file__)
-DATA_DIR_PATH = pathlib.Path(FILE_PATH.parent.parent.absolute().joinpath('data'))
+subj_1_epochs = subj_epochs[1]
 
-# Test reading the mat files.
-mat_file_path = pathlib.Path(DATA_DIR_PATH).joinpath('S1/Session1_MI_13_11_2019_15_18_24_0000_interpbad_concat/data_Bimanual_trial001_montage.mat')
-print('The name of the file is: %s' % mat_file_path.name)
-mat = sio.loadmat(mat_file_path)
+epoch, montage = tools.set_epoch_mne_montage(subj_1_epochs, mne_montage='standard_alphabetic')
+if epoch is None or montage is None:
+    print('One of them is none?')
 
-# Print the mat file.
-print(mat)
-print('-' * 100)
-print(mat.keys())
-print('-' * 100)
-print(mat.items())
+print(epoch.info)
 
-print(mat.get('Name'))
+"""
+montage_fig = montage.plot(kind='3d')
+montage_fig.gca().view_init(azim=70, elev=15)
+montage.plot(kind='topomap', show_names=False)
 """

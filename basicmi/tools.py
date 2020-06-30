@@ -1,6 +1,9 @@
 import pathlib
 
 import mne
+import eeglearn
+import eeglearn.eeg_cnn_lib as eeg_lib
+import eeglearn.utils as eeg_utils
 import scipy.io as sio
 
 # Commonly used paths relative to the tools.py file.
@@ -8,13 +11,15 @@ PROJ_DIR_PATH = pathlib.Path(pathlib.Path(__file__).parent.parent)
 PROJ_DATA_DIR_PATH = pathlib.Path(PROJ_DIR_PATH.joinpath('data'))
 PROJ_MI_DATA_DIR_PATH = pathlib.Path(PROJ_DATA_DIR_PATH.joinpath('mi'))
 
-
 # Installed MNE dir path.
 MNE_DIR_PATH = pathlib.Path(mne.__file__)
 
 # Montages and layouts define 3D and 2D electrode positions, respectively.
 MNE_LAYOUTS_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/layouts'))
 MNE_MONTAGES_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/montages'))
+
+# Installed EEGLearn.
+EEG_LEARN_DIR_PATH = pathlib.Path(eeglearn.__file__)
 
 
 def get_subj_epochs(subj_id, preload=True, equalise_events_ids=None):
@@ -73,27 +78,32 @@ def concat_epochs(epochs, add_offset=False, equalise_event_ids=None):
     return concat
 
 
-def get_montage(mne_montage='biosemi64'):
+def get_mne_montage(mne_montage='biosemi64'):
+
+    if mne_montage is None:
+        return None
+
+    # Make a montage from the MNE library.
     return mne.channels.make_standard_montage(kind=mne_montage)
 
 
-def set_epoch_montage(epoch, montage, copy=True):
+def set_epoch_mne_montage(epochs, mne_montage='standard_alphabetic', copy=False):
 
-    # Check epoch and montage are present.
-    if epoch is None or montage is None:
-        raise ValueError('Epoch or montage parameters are none.')
+    # Check that params are valid.
+    if epochs is None or mne_montage is None:
+        raise ValueError('Epoch or mne_montage is None.')
 
-    # Potentially copy to avoid side-effects.
-    if copy:
-        epoch = epoch.copy()
-        montage = montage.copy()
+    # Make the MNE montage for the epoch.
+    montage = get_mne_montage(mne_montage=mne_montage)
+    if montage is None:
+        raise ValueError('Unable to find montage %s' % mne_montage)
 
-    # Apply the montage and return [the copies].]
-    epoch.set_montage(montage=montage)
-    return epoch, montage
+    # Set the montage; a copy of epochs avoids side-effects.
+    epochs = epochs.copy() if copy else epochs
+    epochs.set_montage(montage=montage)
 
-
-
+    # Return the [copied] epoch and loaded montage.
+    return epochs, montage
 
 
 def extract_data(epochs):
