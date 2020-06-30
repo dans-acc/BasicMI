@@ -1,63 +1,81 @@
 import pathlib
+import logging
 
 import mne
-import EEGLearn as eeg_learn
+import EEGLearn as eegl
 import scipy.io as sio
 
-# Commonly used paths relative to the tools.py file.
-PROJ_DIR_PATH = pathlib.Path(pathlib.Path(__file__).parent.parent)
-PROJ_DATA_DIR_PATH = pathlib.Path(PROJ_DIR_PATH.joinpath('data'))
-PROJ_MI_DATA_DIR_PATH = pathlib.Path(PROJ_DATA_DIR_PATH.joinpath('mi'))
+# tools.py file path - used as a reference point.
+PROJ_TOOLS_FILE_PATH = pathlib.Path(__file__)
 
-# Installed MNE dir path.
+
+# Project related paths (relative to the tools file path).
+PROJ_DIR_PATH = pathlib.Path(PROJ_TOOLS_FILE_PATH.parent)
+PROJ_RES_DIR_PATH = pathlib.Path(PROJ_DIR_PATH.joinpath('resources'))
+PROJ_MONTAGES_DIR_PATH = pathlib.Path(PROJ_RES_DIR_PATH.joinpath('montages'))
+PROJ_SUBJECTS_DIR_PATH = pathlib.Path(PROJ_RES_DIR_PATH.joinpath('subjects'))
+
+
+# MNE resource related_paths
 MNE_DIR_PATH = pathlib.Path(mne.__file__)
-
-# Montages and layouts define 3D and 2D electrode positions, respectively.
 MNE_LAYOUTS_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/layouts'))
 MNE_MONTAGES_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/montages'))
 
 
-def get_subj_epochs(subj_id, preload=True, equalise_events_ids=None):
+def get_mat_items(mat_path, mat_keys=None):
 
-    # Sanity checks.
+    if mat_path is None or not mat_path.exists() or not mat_path.is_file() or mat_path.is_dir():
+        return None
+
+    # Read the mat file.
+    mat_file_dict = sio.loadmat(file_name=str(mat_path))
+    if mat_file_dict is None:
+        return None
+    elif mat_keys is None:
+        return mat_file_dict
+
+    # Obtain only specific mat items (defined by mat_keys).
+    return {key: mat_file_dict.get(key) for key in mat_keys}
+
+
+def get_subj_epochs(subj_id, preload=True, equalise_event_ids=None):
+
     if subj_id is None:
         return None
 
-    # Get the subject path.
-    subj_path = pathlib.Path(PROJ_MI_DATA_DIR_PATH.joinpath('S%d//epochs_epo.fif' % subj_id))
+    # Get the subject path based on the ID.
+    subj_path = pathlib.Path(PROJ_SUBJECTS_DIR_PATH.joinpath('S%s//epochs_epo.fif' % str(subj_id)))
     if not subj_path.exists() or not subj_path.is_file() or subj_path.is_dir():
         return None
 
-    # Get the subjects subjects.
-    epochs = mne.read_epochs(str(subj_path.absolute()), preload=preload)
-    if epochs is None:
+    # Read the subjects epochs.
+    subj_epochs = mne.read_epochs(str(subj_path.absolute()), preload=preload)
+    if subj_epochs is None:
         return None
 
-    # Whether the classes should be equalised.
-    if equalise_events_ids is not None:
-        epochs.equalize_event_counts(event_ids=equalise_events_ids)
+    # If not none, equalise the defined classes.
+    if equalise_event_ids is not None:
+        subj_epochs.equalize_event_counts(event_ids=equalise_event_ids)
 
-    return epochs
+    return subj_epochs
 
 
-def get_proj_epochs(subj_ids, preload=True, equalise_events_ids=None):
+def get_proj_epochs(subj_ids, preload=True, equalise_event_ids=None):
 
-    # Sanity checks.
     if subj_ids is None:
         return None
     elif not subj_ids:
         return {}
 
-    # Get subjects for each of the subjects.
-    subj_epochs = {}
+    # Read all of the resource subject epochs.
+    proj_epochs = {}
     for subj_id in subj_ids:
-        subj_epoch = get_subj_epochs(subj_id=subj_id, preload=preload, equalise_events_ids=equalise_events_ids)
-        if subj_epoch is None:
-            print('Its none')
+        subj_epochs = get_subj_epochs(subj_id=subj_id, preload=preload, equalise_event_ids=equalise_event_ids)
+        if subj_epochs is None:
             continue
-        subj_epochs[subj_id] = subj_epoch
+        proj_epochs[subj_id] = subj_epochs
 
-    return subj_epochs
+    return proj_epochs
 
 
 def concat_epochs(epochs, add_offset=False, equalise_event_ids=None):
@@ -73,31 +91,31 @@ def concat_epochs(epochs, add_offset=False, equalise_event_ids=None):
     return concat
 
 
-def get_mne_montage(mne_montage='biosemi64'):
+def get_mne_montage(kind):
 
-    if mne_montage is None:
+    if kind is None:
         return None
 
-    # Make a montage from the MNE library.
-    return mne.channels.make_standard_montage(kind=mne_montage)
+    # Get a montage from MNE library.
+    return mne.channels.make_standard_montage(kind=kind)
 
 
-def set_epoch_mne_montage(epochs, mne_montage='standard_alphabetic', copy=False):
+def set_epochs_mne_montage(epochs, kind, new=False):
 
-    # Check that params are valid.
-    if epochs is None or mne_montage is None:
-        raise ValueError('Epoch or mne_montage is None.')
+    # Check parameter validity.
+    if epochs is None or kind is None:
+        return None, None
 
-    # Make the MNE montage for the epoch.
-    montage = get_mne_montage(mne_montage=mne_montage)
+    # Get the montage.
+    montage = get_mne_montage(kind=kind)
     if montage is None:
-        raise ValueError('Unable to find montage %s' % mne_montage)
+        return None, None
 
-    # Set the montage; a copy of subjects avoids side-effects.
-    epochs = epochs.copy() if copy else epochs
+    # Set the epochs montage (on a potentially new epochs).
+    epochs = epochs.copy() if new else epochs
     epochs.set_montage(montage=montage)
 
-    # Return the [copied] epoch and loaded montage.
+    # Return the epochs instance and the loaded montage.
     return epochs, montage
 
 

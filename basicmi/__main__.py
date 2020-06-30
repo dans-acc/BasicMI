@@ -4,7 +4,11 @@ import pathlib
 
 from basicmi import tools
 
-import EEGLearn as eeg_learn
+proj_epochs = tools.get_proj_epochs(subj_ids=[1, 2], equalise_event_ids=['Left', 'Right', 'Bimanual'])
+print(proj_epochs)
+
+
+"""
 
 EEG_LEARN_DIR_PATH = pathlib.Path(eeg_learn.__file__)
 
@@ -24,6 +28,7 @@ if epoch is None or montage is None:
     print('One of them is none?')
 
 print(epoch.info)
+"""
 
 """
 montage_fig = montage.plot(kind='3d')
