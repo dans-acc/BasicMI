@@ -4,12 +4,34 @@ import pathlib
 
 from basicmi import tools
 
+"""
+
+Delta band is < 4Hz
+Theta band is 4-8Hz;
+Alpha band is 8-12Hz;
+Beta band is 13-30Hz;
+Gamma band is > 30Hz
+
+:param epochs:
+:param freq_bands: follow the form (f_min, f_max) in order theta, alpha, beta, gamma
+:return:
+"""
+
 
 if __name__ == '__main__':
 
     # Get the projects epochs.
-    proj_epochs = tools.get_proj_epochs(subj_ids=[1, 2, 3],
+    proj_epochs = tools.get_proj_epochs(subj_ids=[1],
                                         equalise_event_ids=['Left', 'Right', 'Bimanual'])
+
+    # Get the subject data.
+    subj_epochs = proj_epochs[1]
+    subj_data, subj_labels = tools.extract_epoch_data_or_labels(epochs=subj_epochs, data=False)
+
+    print('±' * 200)
+    print(subj_data)
+    print(subj_labels)
+    print('±' * 200)
 
     # Get the neuroscan montage locations.
     neuroscan_coords = tools.get_neuroscan_montage(azim=True)

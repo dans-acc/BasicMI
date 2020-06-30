@@ -5,6 +5,7 @@ import mne
 import EEGLearn.utils as eeg_utils
 import scipy.io as sio
 
+
 # tools.py file path - used as a reference point.
 PROJ_TOOLS_FILE_PATH = pathlib.Path(__file__)
 
@@ -127,7 +128,6 @@ def get_mne_montage(kind):
 
 def set_epochs_mne_montage(epochs, kind, new=False):
 
-    # Check parameter validity.
     if epochs is None or kind is None:
         return None, None
 
@@ -144,16 +144,42 @@ def set_epochs_mne_montage(epochs, kind, new=False):
     return epochs, montage
 
 
-def extract_epochs_features(epochs):
-    pass
+def extract_epoch_data_or_labels(epochs, data=True, labels=True):
 
-
-def extract_data(epochs):
-
-    # Get the epoch data as Trials x Channels x Samples; get the trial epoch class labels.
+    epoch_data, epoch_labels = None, None
     if epochs is not None:
-        return epochs.get_data(), epochs.events[:, 2]
-    return None, None
+
+        # Get the epoch data as Trials x Channels x Samples; get the trial epoch class labels.
+        epoch_data = epochs.get_data() if data else None
+        epoch_labels = epochs.events[:, 2] if labels else None
+
+    return epoch_data, epoch_labels
+
+
+def extract_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=1):
+
+    if epochs is None or freq_bands is None:
+        return None
+    elif not freq_bands:
+        return []
+
+    # The feature matrix.
+    features_mtx = []
+
+    # Calculate the power spectral density within specific bands.
+    for f_min, f_max in freq_bands:
+
+        # Returns a matrix in the shape of (n_epochs, n_channels, n_freqs)
+        psds, freqs = mne.time_frequency.psd_multitaper(inst=epochs, tmin=t_min, tmax=t_max,
+                                                        fmin=f_min, fmax=f_max, proj=True, n_jobs=n_jobs)
+        if psds is None or freqs is None:
+            return None
+
+        # Arrange the features in band and electrode order (theta_1, theta_2, ..., theta_n, ..., alpha_n, ..., beta_n)
+        # TODO: what does it mean by '7 time windows'
+
+    # Return the feature matrix.
+    return features_mtx
 
 
 
