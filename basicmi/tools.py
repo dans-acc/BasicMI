@@ -1,9 +1,7 @@
 import pathlib
 
 import mne
-import eeglearn
-import eeglearn.eeg_cnn_lib as eeg_lib
-import eeglearn.utils as eeg_utils
+import EEGLearn as eeg_learn
 import scipy.io as sio
 
 # Commonly used paths relative to the tools.py file.
@@ -18,9 +16,6 @@ MNE_DIR_PATH = pathlib.Path(mne.__file__)
 MNE_LAYOUTS_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/layouts'))
 MNE_MONTAGES_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/montages'))
 
-# Installed EEGLearn.
-EEG_LEARN_DIR_PATH = pathlib.Path(eeglearn.__file__)
-
 
 def get_subj_epochs(subj_id, preload=True, equalise_events_ids=None):
 
@@ -33,7 +28,7 @@ def get_subj_epochs(subj_id, preload=True, equalise_events_ids=None):
     if not subj_path.exists() or not subj_path.is_file() or subj_path.is_dir():
         return None
 
-    # Get the subjects epochs.
+    # Get the subjects subjects.
     epochs = mne.read_epochs(str(subj_path.absolute()), preload=preload)
     if epochs is None:
         return None
@@ -53,7 +48,7 @@ def get_proj_epochs(subj_ids, preload=True, equalise_events_ids=None):
     elif not subj_ids:
         return {}
 
-    # Get epochs for each of the subjects.
+    # Get subjects for each of the subjects.
     subj_epochs = {}
     for subj_id in subj_ids:
         subj_epoch = get_subj_epochs(subj_id=subj_id, preload=preload, equalise_events_ids=equalise_events_ids)
@@ -67,7 +62,7 @@ def get_proj_epochs(subj_ids, preload=True, equalise_events_ids=None):
 
 def concat_epochs(epochs, add_offset=False, equalise_event_ids=None):
 
-    # Copy all epochs (to avoid side effects); concat into one epoch.
+    # Copy all subjects (to avoid side effects); concat into one epoch.
     copied_epochs = [epoch.copy() for epoch in epochs]
     concat = mne.concatenate_epochs(epochs_list=copied_epochs, add_offset=add_offset)
 
@@ -98,7 +93,7 @@ def set_epoch_mne_montage(epochs, mne_montage='standard_alphabetic', copy=False)
     if montage is None:
         raise ValueError('Unable to find montage %s' % mne_montage)
 
-    # Set the montage; a copy of epochs avoids side-effects.
+    # Set the montage; a copy of subjects avoids side-effects.
     epochs = epochs.copy() if copy else epochs
     epochs.set_montage(montage=montage)
 
