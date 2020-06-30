@@ -156,7 +156,7 @@ def extract_epoch_data_or_labels(epochs, data=True, labels=True):
     return epoch_data, epoch_labels
 
 
-def extract_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=1):
+def extract_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=2):
 
     if epochs is None or freq_bands is None:
         return None
