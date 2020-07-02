@@ -178,8 +178,6 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs):
     # Generate FFT PSD features for each of the epochs.
     for f_min, f_max in freq_bands:
 
-        # TODO: Time windows loop will be inserted here!
-
         # Returns a matrix in the shape of (n_epochs, n_channels, n_freqs)
         psds, freqs = mne.time_frequency.psd_multitaper(inst=epochs, tmin=t_min, tmax=t_max, fmin=f_min, fmax=f_max,
                                                         proj=True, n_jobs=n_jobs)
@@ -200,4 +198,9 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs):
     return samples_x_features_mtx
 
 
+def gen_images(cap_locations, samples_x_features_mtx, n_grid_points=32, normalise=True, edgeless=False):
+
+    # Delegate the task of generating images to the tf_EEGLearn library.
+    return eeg_utils.gen_images(locs=cap_locations, features=samples_x_features_mtx,
+                                n_gridpoints=n_grid_points, edgeless=edgeless)
 
