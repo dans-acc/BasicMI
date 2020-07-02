@@ -35,7 +35,18 @@ if __name__ == '__main__':
 
     # Generate features for the subject from theta, alpha and beta bands.
     freq_bands = [(4, 7), (8, 13), (13, 30)]
-    samples_x_features_mtx = tools.get_epochs_psd_features(subj_epochs, 0, 5, freq_bands=freq_bands, n_jobs=2)
+    samples_x_features_mtx = tools.get_epochs_psd_features(epochs=subj_epochs,
+                                                           t_min=0,
+                                                           t_max=5,
+                                                           freq_bands=freq_bands,
+                                                           n_jobs=2,
+                                                           include_classes=False,
+                                                           as_np_arr=True)
+
+    print('The samples_x_features_mtx is:')
+    print(samples_x_features_mtx.shape)
+
+    """
     print('^' * 100)
     print(np.asarray(samples_x_features_mtx).shape)
     print('v' * 100)
@@ -43,27 +54,23 @@ if __name__ == '__main__':
     print('Sample len: %d' % len(samples_x_features_mtx))
     print('Feature len: %d' % len(samples_x_features_mtx[0]))
     print(np.asarray(samples_x_features_mtx))
+    """
 
     # Get the neuroscan montage locations and project them onto a 2D layout.
     neuroscan_coords = tools.get_neuroscan_montage(azim=True)
     neuroscan_coords = np.asarray(neuroscan_coords)
 
-    print('Number of electrodes: %d' % neuroscan_coords.shape[0])
-    print(neuroscan_coords.shape)
-
     # Generate images based on the feature matrix, coordinates, etc.
-    """
     images = tools.gen_images(cap_locations=neuroscan_coords,
                               samples_x_features_mtx=samples_x_features_mtx,
                               n_grid_points=32,
                               normalise=True,
                               edgeless=False)
-    """
 
+    """
     images = tools.gen_images(cap_locations=neuroscan_coords,
                               samples_x_features_mtx=features,
                               n_grid_points=32,
                               normalise=True,
                               edgeless=False)
-
-    print('Images generated?')
+    """
