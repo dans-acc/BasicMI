@@ -212,6 +212,10 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=3, include_
     return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
 
 
+def gen_folds():
+    pass
+
+
 def gen_images(cap_locations, samples_x_features_mtx, n_grid_points=32, normalise=True, edgeless=False):
 
     # Convert list types to np.array (if not already).
