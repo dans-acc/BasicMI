@@ -145,7 +145,7 @@ def set_epochs_mne_montage(epochs, kind, new=False):
     return epochs, montage
 
 
-def get_epoch_data_or_labels(epochs, data=True, labels=True):
+def get_epochs_data_and_labels(epochs, data=True, labels=True):
 
     epoch_data, epoch_labels = None, None
     if epochs is not None:
@@ -157,47 +157,47 @@ def get_epoch_data_or_labels(epochs, data=True, labels=True):
     return epoch_data, epoch_labels
 
 
-def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=2):
+def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs):
 
+    # Valid parameters must be present.
     if epochs is None or freq_bands is None:
         return None
     elif not freq_bands:
         return []
 
-    # The labels for the epochs.
-    _, labels = get_epoch_data_or_labels(epochs=epochs, data=False)
+    # Get the labels associated with each of the epochs.
+    _, epochs_labels = get_epochs_data_and_labels(epochs=epochs, data=False)
+    if epochs_labels is None:
+        return None
 
-    # Feature matrix by band and electrode order (theta_1, theta_2, ..., theta_n, ..., alpha_n, ..., beta_n).
-    features_mtx = []
+    # The feature matrix represents samples (epochs) * features (i.e. theta, alpha and beta bands).
+    samples_x_features_mtx = []
+    for epoch_index in range(len(epochs)):
+        samples_x_features_mtx.append([])
 
-    # Calculate the power spectral density within specific bands.
+    # Generate FFT PSD features for each of the epochs.
     for f_min, f_max in freq_bands:
 
+        # TODO: Time windows loop will be inserted here!
+
         # Returns a matrix in the shape of (n_epochs, n_channels, n_freqs)
-        psds, freqs = mne.time_frequency.psd_multitaper(inst=epochs, tmin=t_min, tmax=t_max,
-                                                        fmin=f_min, fmax=f_max, proj=True, n_jobs=n_jobs)
+        psds, freqs = mne.time_frequency.psd_multitaper(inst=epochs, tmin=t_min, tmax=t_max, fmin=f_min, fmax=f_max,
+                                                        proj=True, n_jobs=n_jobs)
         if psds is None or freqs is None:
             return None
 
-        # Transpose the psds to shape of (n_channels, n_epochs, n_freqs)
-        psds = psds.transpose([1, 0, 2])
-        for channel in psds:
+        # Loop through each epoch index; then each channel; adding the mean FFT PSD to the feature matrix.
+        for epoch_index in range(len(psds)):
+            for channel in psds[epoch_index]:
+                mean_channel_psds = channel.mean()
+                samples_x_features_mtx[epoch_index].append(mean_channel_psds)
 
-            feature_vect = []
-            for epoch in channel:
-                pass
+    # Append labels to each of the features matrix.
+    for i in range(len(samples_x_features_mtx)):
+        features = samples_x_features_mtx[i]
+        features.append(epochs_labels[i])
 
-            # Last column contains the classification.
-            feature_vect.append() # TODO: we have to loop by index in order to obtain the class from the extracted labels.
-            features_mtx.append(feature_vect)
-
-    # Return the feature matrix.
-    return features_mtx
-
-
-
-
-
+    return samples_x_features_mtx
 
 
 
