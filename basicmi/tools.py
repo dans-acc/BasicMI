@@ -44,7 +44,7 @@ def get_mat_items(mat_path, mat_keys=None):
     return {key: mat_file_dict.get(key) for key in mat_keys}
 
 
-def get_subj_epochs(subj_id, preload=True, equalise_event_ids=None):
+def get_subj_epochs(subj_id, preload=True, equalise_event_ids=None, inc_subj_info_id=True):
 
     if subj_id is None:
         return None
@@ -63,10 +63,15 @@ def get_subj_epochs(subj_id, preload=True, equalise_event_ids=None):
     if equalise_event_ids is not None:
         subj_epochs.equalize_event_counts(event_ids=equalise_event_ids)
 
+    # Generate and add epoch subject id.
+    if inc_subj_info_id:
+        subj_info = {'id': int(subj_id)}
+        subj_epochs.info['subject_info'] = subj_info
+
     return subj_epochs
 
 
-def get_proj_epochs(subj_ids, preload=True, equalise_event_ids=None):
+def get_proj_epochs(subj_ids, preload=True, equalise_event_ids=None, inc_subj_info_id=True):
 
     if subj_ids is None:
         return None
@@ -76,7 +81,9 @@ def get_proj_epochs(subj_ids, preload=True, equalise_event_ids=None):
     # Read all of the resource subject epochs.
     proj_epochs = {}
     for subj_id in subj_ids:
-        subj_epochs = get_subj_epochs(subj_id=subj_id, preload=preload, equalise_event_ids=equalise_event_ids)
+        subj_epochs = get_subj_epochs(subj_id=subj_id, preload=preload,
+                                      equalise_event_ids=equalise_event_ids,
+                                      inc_subj_info_id=inc_subj_info_id)
         if subj_epochs is None:
             continue
         proj_epochs[subj_id] = subj_epochs
@@ -210,10 +217,6 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=3, include_
 
     # Return the feature matrix without the included classes.
     return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
-
-
-def gen_folds():
-    pass
 
 
 def gen_images(cap_locations, samples_x_features_mtx, n_grid_points=32, normalise=True, edgeless=False):
