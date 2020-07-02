@@ -219,6 +219,31 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=3, include_
     return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
 
 
+def gen_folds(epochs, samples_x_features_mtx):
+
+    # Validate the parameters.
+    if epochs is None:
+        return None
+    elif not epochs:
+        return []
+
+    # Get the list of labels associated with each of the epochs.
+    _, epochs_labels = get_epochs_data_and_labels(epochs=epochs, data=False)
+    if epochs_labels is None:
+        return None
+
+    # Each epoch must have a corresponding label and feature.
+    assert len(epochs_labels) == len(epochs) == len(samples_x_features_mtx)
+
+    # Represents the pairs of folds i.e. (training index values, testing index values).
+    folds = []
+
+    # TODO: generate all folds!
+
+    return folds
+
+
+
 def gen_images(cap_locations, samples_x_features_mtx, n_grid_points=32, normalise=True, edgeless=False):
 
     # Convert list types to np.array (if not already).
