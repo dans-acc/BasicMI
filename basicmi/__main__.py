@@ -37,23 +37,20 @@ if __name__ == '__main__':
 
     # Get the subject data.
     subj_epochs = proj_epochs[1]
-
-    print('Subject has %d epochs' % len(subj_epochs))
-
     subj_data, subj_labels = tools.get_epochs_data_and_labels(epochs=subj_epochs, data=False)
 
-    print('±' * 200)
-    print(subj_data)
-    print(subj_labels)
-    print('±' * 200)
-
+    # Generate features for the subject.
     freq_bands = [(4, 5)]
-    feature_mtx = tools.get_epochs_psd_features(subj_epochs, 0, 5, freq_bands=freq_bands, n_jobs=2)
-    print('The Generated feature matrix is:')
-    print(feature_mtx)
+    samples_x_features_mtx = tools.get_epochs_psd_features(subj_epochs, 0, 5, freq_bands=freq_bands, n_jobs=2)
 
-    # Get the neuroscan montage locations.
+    # Get the neuroscan montage locations and project them onto a 2D layout.
     neuroscan_coords = tools.get_neuroscan_montage(azim=True)
-    #print(neuroscan_coords)
 
-    # Testing image generation.
+    # Generate images based on the feature matrix, coordinates, etc.
+    images = tools.gen_images(cap_locations=neuroscan_coords,
+                              samples_x_features_mtx=samples_x_features_mtx,
+                              n_grid_points=32,
+                              normalise=True,
+                              edgeless=False)
+
+    print('Images generated?')
