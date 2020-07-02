@@ -219,18 +219,26 @@ def gen_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=3, include_
     return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
 
 
-def gen_folds(subjs, subj_epochs, subj_images):
+def gen_folds(subj_ids, subj_epochs, epoch_feats):
 
-    # Validate the params.
-    if subjs is None or subj_epochs is None or subj_images is None:
+    # Validate parameters.
+    if subj_ids is None or subj_epochs is None or epoch_feats is None:
         return None
-    elif not subjs:
-        return None
+    elif not subj_ids:
+        return []
 
-    # The folds representing the testing and training sets.
+    # Check that all subject ids have epochs and features.
+    for subj_id in subj_ids:
+        if subj_id not in subj_epochs or subj_id not in epoch_feats:
+            return None
+
+    # Pairs of folds.
     folds = []
 
-    # TODO: Generate the pairs of folds.
+    # Get each of the unique subject ids.
+    for unique_subj_id in np.unique(subj_ids):
+        ts = subj_ids == unique_subj_id
+        pass
 
     return folds
 
