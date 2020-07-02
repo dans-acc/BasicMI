@@ -173,6 +173,8 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs, include_cl
     # Generate FFT PSD features for each of the epochs.
     for f_min, f_max in freq_bands:
 
+        # TODO: Add the timing windows here!
+
         # Returns a matrix in the shape of (n_epochs, n_channels, n_freqs)
         psds, freqs = mne.time_frequency.psd_multitaper(inst=epochs, tmin=t_min, tmax=t_max, fmin=f_min, fmax=f_max,
                                                         proj=True, n_jobs=n_jobs)
@@ -194,7 +196,7 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs, include_cl
     if epochs_labels is None:
         return None
 
-    #
+    # Epochs and labels must be the same length.
     assert len(epochs_labels) == len(samples_x_features_mtx)
 
     # Include the classes into the feature matrix.
