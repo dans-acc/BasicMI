@@ -157,18 +157,13 @@ def get_epochs_data_and_labels(epochs, data=True, labels=True):
     return epoch_data, epoch_labels
 
 
-def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs):
+def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs, include_classes=False):
 
     # Valid parameters must be present.
     if epochs is None or freq_bands is None:
         return None
     elif not freq_bands:
         return []
-
-    # Get the labels associated with each of the epochs.
-    _, epochs_labels = get_epochs_data_and_labels(epochs=epochs, data=False)
-    if epochs_labels is None:
-        return None
 
     # The feature matrix represents samples (epochs) * features (i.e. theta, alpha and beta bands).
     samples_x_features_mtx = []
@@ -190,15 +185,34 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs):
                 mean_channel_psds = channel.mean()
                 samples_x_features_mtx[epoch_index].append(mean_channel_psds)
 
-    # Append labels to each of the features matrix.
+    # Present because further processing includes classes within the feature matrix.
+    if not include_classes:
+        return samples_x_features_mtx
+
+    # Get the labels associated with each of the epochs.
+    _, epochs_labels = get_epochs_data_and_labels(epochs=epochs, data=False)
+    if epochs_labels is None:
+        return None
+
+    #
+    assert len(epochs_labels) == len(samples_x_features_mtx)
+
+    # Include the classes into the feature matrix.
     for i in range(len(samples_x_features_mtx)):
         features = samples_x_features_mtx[i]
         features.append(epochs_labels[i])
 
+    # Return the feature matrix without the included classes.
     return samples_x_features_mtx
 
 
 def gen_images(cap_locations, samples_x_features_mtx, n_grid_points=32, normalise=True, edgeless=False):
+
+    # Convert list types to np.array (if not already).
+    if not isinstance(cap_locations, np.ndarray):
+        cap_locations = np.asarray(cap_locations)
+    if not isinstance(samples_x_features_mtx, np.ndarray):
+        samples_x_features_mtx = np.asarray(samples_x_features_mtx)
 
     # Delegate the task of generating images to the tf_EEGLearn library.
     return eeg_utils.gen_images(locs=cap_locations, features=samples_x_features_mtx,
