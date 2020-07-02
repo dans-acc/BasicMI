@@ -104,7 +104,7 @@ def concat_epochs(epochs, add_offset=False, equalise_event_ids=None):
     return concat
 
 
-def get_neuroscan_montage(azim=False):
+def get_neuroscan_montage(azim=False, as_np_arr=True):
 
     # Get the location to the neuroscan montage path.
     neuroscan_path = pathlib.Path(PROJ_MONTAGES_DIR_PATH.joinpath('neuroscan_montage.mat'))
@@ -119,14 +119,14 @@ def get_neuroscan_montage(azim=False):
     # Get the neuroscan 3d coords.
     neuroscan_3d_coords = neuroscan_items['A']
     if not azim:
-        return neuroscan_3d_coords
+        return np.asarray(neuroscan_3d_coords) if as_np_arr else neuroscan_3d_coords
 
     # Convert the 3D coords into 2D coords and return.
     neuroscan_2d_coords = []
     for coord in neuroscan_3d_coords:
         neuroscan_2d_coords.append(eeg_utils.azim_proj(coord))
 
-    return neuroscan_2d_coords
+    return np.asarray(neuroscan_2d_coords) if as_np_arr else neuroscan_3d_coords
 
 
 def get_mne_montage(kind):
