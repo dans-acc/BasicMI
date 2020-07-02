@@ -24,6 +24,10 @@ MNE_LAYOUTS_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/layouts
 MNE_MONTAGES_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/montages'))
 
 
+def create_logger():
+    pass
+
+
 def get_mat_items(mat_path, mat_keys=None):
 
     if mat_path is None or not mat_path.exists() or not mat_path.is_file() or mat_path.is_dir():
@@ -157,13 +161,13 @@ def get_epochs_data_and_labels(epochs, data=True, labels=True):
     return epoch_data, epoch_labels
 
 
-def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs, include_classes=False):
+def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=3, include_classes=False, as_np_arr=True):
 
     # Valid parameters must be present.
     if epochs is None or freq_bands is None:
         return None
     elif not freq_bands:
-        return []
+        return np.asarray([]) if as_np_arr else []
 
     # The feature matrix represents samples (epochs) * features (i.e. theta, alpha and beta bands).
     samples_x_features_mtx = []
@@ -189,7 +193,7 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs, include_cl
 
     # Present because further processing includes classes within the feature matrix.
     if not include_classes:
-        return samples_x_features_mtx
+        return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
 
     # Get the labels associated with each of the epochs.
     _, epochs_labels = get_epochs_data_and_labels(epochs=epochs, data=False)
@@ -205,7 +209,7 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs, include_cl
         features.append(epochs_labels[i])
 
     # Return the feature matrix without the included classes.
-    return samples_x_features_mtx
+    return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
 
 
 def gen_images(cap_locations, samples_x_features_mtx, n_grid_points=32, normalise=True, edgeless=False):
