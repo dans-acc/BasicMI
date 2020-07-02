@@ -168,7 +168,7 @@ def get_epochs_data_and_labels(epochs, data=True, labels=True):
     return epoch_data, epoch_labels
 
 
-def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=3, include_classes=False, as_np_arr=True):
+def gen_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=3, include_classes=False, as_np_arr=True):
 
     # Valid parameters must be present.
     if epochs is None or freq_bands is None:
@@ -219,29 +219,20 @@ def get_epochs_psd_features(epochs, t_min, t_max, freq_bands, n_jobs=3, include_
     return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
 
 
-def gen_folds(epochs, samples_x_features_mtx):
+def gen_folds(subjs, subj_epochs, subj_images):
 
-    # Validate the parameters.
-    if epochs is None:
+    # Validate the params.
+    if subjs is None or subj_epochs is None or subj_images is None:
         return None
-    elif not epochs:
-        return []
-
-    # Get the list of labels associated with each of the epochs.
-    _, epochs_labels = get_epochs_data_and_labels(epochs=epochs, data=False)
-    if epochs_labels is None:
+    elif not subjs:
         return None
 
-    # Each epoch must have a corresponding label and feature.
-    assert len(epochs_labels) == len(epochs) == len(samples_x_features_mtx)
-
-    # Represents the pairs of folds i.e. (training index values, testing index values).
+    # The folds representing the testing and training sets.
     folds = []
 
-    # TODO: generate all folds!
+    # TODO: Generate the pairs of folds.
 
     return folds
-
 
 
 def gen_images(cap_locations, samples_x_features_mtx, n_grid_points=32, normalise=True, edgeless=False):
