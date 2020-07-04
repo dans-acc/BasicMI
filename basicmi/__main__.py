@@ -40,12 +40,18 @@ def gen_unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
     # Unpack the subject ids and samples.
     ids = []
     samples = []
+    labels = []
     for sid in proj_ids:
 
         # Unpack the subjects ids and features.
         subj_feats = proj_feats[sid]
         ids += [sid for i in range(len(subj_feats))]
         samples += subj_feats
+
+        # Unpack the labels for the ids and samples.
+        subj_epochs = proj_epochs[sid]
+        subj_epochs_labels = utils.get_epochs_labels(epochs=subj_epochs)
+        labels += subj_epochs_labels
 
         # Ensure mapping validity.
         assert len(ids) == len(samples)
@@ -66,7 +72,7 @@ def gen_unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
         # Add the pairs to the list of folds.
         folds.append((training_set_indices, test_set_indices))
 
-    return np.asarray(folds) if as_np_arr else folds
+    return ids, samples, labels, folds
 
 
 def main():
