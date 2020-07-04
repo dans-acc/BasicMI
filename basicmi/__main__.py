@@ -61,6 +61,17 @@ def extract_subj_psd_feats(epochs, t_min, t_max, freq_bands, n_jobs=3, inc_class
     return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
 
 
+def extract_proj_psd_feats(proj_epochs, t_min, t_max, freq_bands, n_jobs=3, inc_classes=False, as_np_arr=True):
+
+    # Loop through each of the sid, epoch pairs, generating a feature matrix for each.
+    proj_feats = {}
+    for sid, subj_epochs in proj_epochs:
+        proj_feats[sid] = extract_subj_psd_feats(epochs=subj_epochs, t_min=t_min, t_max=t_max, freq_bands=freq_bands,
+                                                 n_jobs=n_jobs, inc_classes=inc_classes, as_np_arr=as_np_arr)
+
+    return proj_feats
+
+
 def gen_subj_imgs(subj_feats, cap_coords, n_grid_points=32, normalise=True, edgeless=False):
 
     # Convert the necessary parameters to np arrays (if not already).
