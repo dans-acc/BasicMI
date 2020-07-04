@@ -10,20 +10,89 @@ import EEGLearn.utils as eeg_utils
 from basicmi import utils
 
 
-def gen_subj_img(cap_coords, samples_x_features_mtx, n_grid_points=32, normalise=True, edgeless=False):
+def extract_subj_psd_feats(epochs, t_min, t_max, freq_bands, n_jobs=3, inc_classes=False, as_np_arr=True):
 
-    # TODO: Should return a dictionary!!! gen_proj_imgs, gen_subj_img
+    # Validate the parameters.
+    if epochs is None or freq_bands is None:
+        return None
+    elif not freq_bands:
+        return np.asarray([]) if as_np_arr else []
 
-    # Convert list of types to np.array (if not already).
+    # The feature matrix represents samples (epochs) * features (i.e. theta, alpha and beta bands).
+    samples_x_features_mtx = []
+    for epoch_index in range(len(epochs)):
+        samples_x_features_mtx.append([])
+
+    # Generate FFT PSD features for each of the epochs.
+    for f_min, f_max in freq_bands:
+
+        # TODO: Add the timing windows here!
+
+        # Returns a matrix in the shape of (n_epochs, n_channels, n_freqs)
+        psds, freqs = mne.time_frequency.psd_multitaper(inst=epochs, tmin=t_min, tmax=t_max, fmin=f_min, fmax=f_max,
+                                                        proj=True, n_jobs=n_jobs)
+        if psds is None or freqs is None:
+            return None
+
+        # Loop through each epoch index; then each channel; adding the mean FFT PSD to the feature matrix.
+        for epoch_index in range(len(psds)):
+            for channel in psds[epoch_index]:
+                mean_channel_psds = channel.mean()
+                samples_x_features_mtx[epoch_index].append(mean_channel_psds)
+
+    # Present because further processing includes classes within the feature matrix.
+    if not inc_classes:
+        return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
+
+    # Get the labels associated with each of the epochs.
+    epochs_labels = utils.get_epochs_labels(epochs=epochs)
+    if epochs_labels is None:
+        return None
+
+    # Epochs and labels must be the same length.
+    assert len(epochs_labels) == len(samples_x_features_mtx)
+
+    # Include the classes into the feature matrix.
+    for i in range(len(samples_x_features_mtx)):
+        features = samples_x_features_mtx[i]
+        features.append(epochs_labels[i])
+
+    # Return the feature matrix without the included classes.
+    return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
+
+
+def gen_subj_imgs(subj_feats, cap_coords, n_grid_points=32, normalise=True, edgeless=False):
+
+    # Convert the necessary parameters to np arrays (if not already).
+    if not isinstance(subj_feats, np.ndarray):
+        subj_feats = np.asarray(subj_feats)
     if not isinstance(cap_coords, np.ndarray):
         cap_coords = np.asarray(cap_coords)
-    if not isinstance(samples_x_features_mtx, np.ndarray):
-        samples_x_features_mtx = np.asarray(samples_x_features_mtx)
 
-    # Delegate image generation to the tf_EEGLean library.
-    return eeg_utils.gen_images(locs=cap_coords, features=samples_x_features_mtx,
+    # Delegate the task of generating subject images to the tf_EEGLearn lib.
+    return eeg_utils.gen_images(locs=cap_coords, features=subj_feats,
                                 n_gridpoints=n_grid_points, normalize=normalise,
                                 edgeless=edgeless)
+
+
+def gen_proj_imgs(proj_ids, proj_feats, cap_coords, n_grid_points=32, normalise=True, edgeless=False):
+
+    # Validate the parameters.
+    if proj_ids is None or proj_feats is None or cap_coords is None:
+        raise ValueError('Parameter(s) are None.')
+    elif not proj_ids:
+        return []
+
+    # Generate images for each of the subjects.
+    proj_imgs = {}
+    for sid in np.unique(proj_ids):
+        subj_imgs = gen_subj_imgs(subj_feats=proj_feats[sid], cap_coords=cap_coords, n_grid_points=n_grid_points,
+                                  normalise=normalise, edgeless=edgeless)
+        if subj_imgs is None:
+            raise RuntimeError('Unable to generate images for subject: %d' % sid)
+        proj_imgs[sid] = subj_imgs
+
+    return proj_imgs
 
 
 def gen_unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
@@ -53,7 +122,8 @@ def gen_unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
         subj_epochs_labels = utils.get_epochs_labels(epochs=subj_epochs)
         labels += subj_epochs_labels
 
-        # Ensure mapping validity.
+        # TODO: Assert that the arrays are of equal length for training.
+
         assert len(ids) == len(samples)
 
     # Generate pairs of index values, representing the training and test sets.
@@ -90,6 +160,8 @@ def main():
     if proj_epochs is None or not proj_epochs.keys():
         return
 
+    # TODO: Generate images here.
+
     # Generate the fold pairs according to leave-one-out validation.
     folds = gen_unpacked_folds(proj_ids=[1, 2],
                                proj_epochs=proj_epochs,
@@ -100,6 +172,7 @@ def main():
         return
 
     print(folds)
+
 
 if __name__ == '__main__':
     main()
