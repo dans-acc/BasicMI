@@ -3,65 +3,104 @@ import mne
 import pathlib
 
 import numpy as np
+np.random.seed(2435)
 
-from basicmi import tools
+import EEGLearn.utils as eeg_utils
 
-"""
-
-Delta band is < 4Hz
-Theta band is 4-8Hz;
-Alpha band is 8-12Hz;
-Beta band is 13-30Hz;
-Gamma band is > 30Hz
-
-:param epochs:
-:param freq_bands: follow the form (f_min, f_max) in order theta, alpha, beta, gamma
-:return:
-"""
+from basicmi import utils
 
 
-if __name__ == '__main__':
+def gen_subj_img(cap_coords, samples_x_features_mtx, n_grid_points=32, normalise=True, edgeless=False):
 
-    arr = np.asarray([1, 2, 3, 4])
-    res = 4 == arr
-    print(res)
-    res2 = np.squeeze(np.nonzero(np.bitwise_not(res)))
-    print(res2)
-    res3 = np.squeeze(np.nonzero(res))
-    print(res3)
+    # TODO: Should return a dictionary!!! gen_proj_imgs, gen_subj_img
 
-    subj_items = tools.get_mat_items(tools.PROJ_MONTAGES_DIR_PATH.joinpath('trials_subNums.mat'), mat_keys=['subjectNum'])
-    subj_nums = subj_items['subjectNum']
+    # Convert list of types to np.array (if not already).
+    if not isinstance(cap_coords, np.ndarray):
+        cap_coords = np.asarray(cap_coords)
+    if not isinstance(samples_x_features_mtx, np.ndarray):
+        samples_x_features_mtx = np.asarray(samples_x_features_mtx)
 
-    print('^v' * 50)
-    for i in np.unique(subj_nums[0]):
-        print(type(i))
-        print(type(subj_nums[0]))
-        ts = i == subj_nums[0]
-        print(type(ts))
-        tr = np.squeeze(np.nonzero(np.bitwise_not(ts)))
-        ts = np.squeeze(np.nonzero(ts))
-        print('%d %s %s' % (i, ts, tr))
-    print('^v' * 50)
+    # Delegate image generation to the tf_EEGLean library.
+    return eeg_utils.gen_images(locs=cap_coords, features=samples_x_features_mtx,
+                                n_gridpoints=n_grid_points, normalize=normalise,
+                                edgeless=edgeless)
 
-    features_items = tools.get_mat_items(tools.PROJ_MONTAGES_DIR_PATH.joinpath('FeatureMat_timeWin.mat'), mat_keys=['features'])
-    features = features_items['features']
 
-    # Get the projects epochs.
-    proj_epochs = tools.get_proj_epochs(subj_ids=[1],
+def gen_unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
+
+    # Validate the parameters.
+    if proj_ids is None or proj_epochs is None or proj_feats is None:
+        raise ValueError('Parameter(s) are None.')
+    elif not proj_ids:
+        return []
+
+    # Get a sorted list of unique ids.
+    proj_ids = np.sort(np.unique(proj_ids))
+
+    # Unpack the subject ids and samples.
+    ids = []
+    samples = []
+    for sid in proj_ids:
+
+        # Unpack the subjects ids and features.
+        subj_feats = proj_feats[sid]
+        ids += [sid for i in range(len(subj_feats))]
+        samples += subj_feats
+
+        # Ensure mapping validity.
+        assert len(ids) == len(samples)
+
+    # Generate pairs of index values, representing the training and test sets.
+    folds = []
+    for sid in proj_ids:
+
+        # Generate test (selected ids) and training (not selected ids) sets based on the selected sid samples.
+        selected_sid_samples = ids == sid
+        training_set_indices = np.squeeze(np.nonzero(np.bitwise_not(selected_sid_samples)))
+        test_set_indices = np.squeeze(np.nonzero(selected_sid_samples))
+
+        # Shuffles only the index values within each respective array.
+        np.random.shuffle(training_set_indices)
+        np.random.shuffle(test_set_indices)
+
+        # Add the pairs to the list of folds.
+        folds.append((training_set_indices, test_set_indices))
+
+    return np.asarray(folds) if as_np_arr else folds
+
+
+def main():
+
+    # Load the cap montage (2D coordinates).
+    neuroscan_coords = utils.get_neuroscan_montage(azim=True, as_np_arr=True)
+    if neuroscan_coords is None:
+        return
+
+    # Load the subjects into memory.
+    proj_epochs = utils.get_proj_epochs(subj_ids=[1, 2],
                                         equalise_event_ids=['Left', 'Right', 'Bimanual'],
                                         inc_subj_info_id=True)
 
-    # Get the subject data.
-    subj_epochs = proj_epochs[1]
+    if proj_epochs is None or not proj_epochs.keys():
+        return
 
-    print('^v' * 50)
-    print(subj_epochs.info['subject_info'])
-    print('^v' * 50)
+    # Generate the fold pairs according to leave-one-out validation.
+    folds = gen_unpacked_folds(proj_ids=[1, 2],
+                               proj_epochs=proj_epochs,
+                               proj_feats={1: [1, 2, 3, 4, 5], 2: [6, 7, 8, 9, 10]},
+                               as_np_arr=True)
 
+    if folds is None:
+        return
+
+    print(folds)
+
+if __name__ == '__main__':
+    main()
+
+
+    """
     subj_data, subj_labels = tools.get_epochs_data_and_labels(epochs=subj_epochs, data=False)
-
-    # Generate features for the subject from theta, alpha and beta bands.
     freq_bands = [(4, 7), (8, 13), (13, 30)]
     samples_x_features_mtx = tools.gen_epochs_psd_features(epochs=subj_epochs,
                                                            t_min=0,
@@ -69,10 +108,10 @@ if __name__ == '__main__':
                                                            freq_bands=freq_bands,
                                                            n_jobs=2,
                                                            include_classes=False,
-                                                           as_np_arr=True)
-
+                                                           as_np_arr=True)                                                           
     print('The samples_x_features_mtx is:')
     print(samples_x_features_mtx.shape)
+    """
 
     """
     print('^' * 100)
@@ -83,17 +122,26 @@ if __name__ == '__main__':
     print('Feature len: %d' % len(samples_x_features_mtx[0]))
     print(np.asarray(samples_x_features_mtx))
     """
-
+    """
     # Get the neuroscan montage locations and project them onto a 2D layout.
     neuroscan_coords = tools.get_neuroscan_montage(azim=True)
     neuroscan_coords = np.asarray(neuroscan_coords)
 
     # Generate images based on the feature matrix, coordinates, etc.
-    images = tools.gen_images(cap_locations=neuroscan_coords,
-                              samples_x_features_mtx=samples_x_features_mtx,
-                              n_grid_points=32,
-                              normalise=True,
-                              edgeless=False)
+    subj_images = {}
+    subj_images[1] = images = tools.gen_images(cap_locations=neuroscan_coords,
+                                               samples_x_features_mtx=samples_x_features_mtx,
+                                               n_grid_points=32,
+                                               normalise=True,
+                                               edgeless=False)
+    """
+
+    """
+    tools.gen_folds(subj_ids=[1],
+                    subj_epochs=proj_epochs,
+                    epoch_feats=subj_images,
+                    as_np_arr=True)
+    """
 
     """
     images = tools.gen_images(cap_locations=neuroscan_coords,
@@ -102,3 +150,17 @@ if __name__ == '__main__':
                               normalise=True,
                               edgeless=False)
     """
+
+    """
+
+    Delta band is < 4Hz
+    Theta band is 4-8Hz;
+    Alpha band is 8-12Hz;
+    Beta band is 13-30Hz;
+    Gamma band is > 30Hz
+
+    :param epochs:
+    :param freq_bands: follow the form (f_min, f_max) in order theta, alpha, beta, gamma
+    :return:
+    """
+
