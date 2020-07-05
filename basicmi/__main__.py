@@ -26,8 +26,6 @@ def extract_subj_psd_feats(epochs, t_min, t_max, freq_bands, n_jobs=3, inc_class
     # Generate FFT PSD features for each of the epochs.
     for f_min, f_max in freq_bands:
 
-        # TODO: Add the timing windows here!
-
         # Returns a matrix in the shape of (n_epochs, n_channels, n_freqs)
         psds, freqs = mne.time_frequency.psd_multitaper(inst=epochs, tmin=t_min, tmax=t_max, fmin=f_min, fmax=f_max,
                                                         proj=True, n_jobs=n_jobs)
@@ -106,7 +104,7 @@ def gen_proj_imgs(proj_ids, proj_feats, cap_coords, n_grid_points=32, normalise=
     return proj_imgs
 
 
-def gen_unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
+def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 
     # Validate the parameters.
     if proj_ids is None or proj_epochs is None or proj_feats is None:
@@ -133,9 +131,7 @@ def gen_unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
         subj_epochs_labels = utils.get_epochs_labels(epochs=subj_epochs)
         labels += subj_epochs_labels
 
-        # TODO: Assert that the arrays are of equal length for training.
-
-        assert len(ids) == len(samples)
+        assert len(ids) == len(samples) == len(labels)
 
     # Generate pairs of index values, representing the training and test sets.
     folds = []
@@ -167,22 +163,35 @@ def main():
     proj_epochs = utils.get_proj_epochs(subj_ids=[1, 2],
                                         equalise_event_ids=['Left', 'Right', 'Bimanual'],
                                         inc_subj_info_id=True)
-
     if proj_epochs is None or not proj_epochs.keys():
         return
 
-    # TODO: Generate images here.
+    # Generate the feature vectors for each of the subjects epochs.
+    freq_bands = [(4, 7), (8, 13), (13, 30)]
+    proj_feats = extract_proj_psd_feats(proj_epochs=proj_epochs, t_min=0, t_max=1, freq_bands=freq_bands,
+                                        n_jobs=3, inc_classes=False, as_np_arr=True)
+    if proj_feats is None:
+        return
+
+    # Generate images from the feature maps.
+    proj_imgs = gen_proj_imgs(proj_ids=[1, 2],
+                              proj_feats=proj_feats,
+                              cap_coords=neuroscan_coords,
+                              n_grid_points=32,
+                              normalise=True,
+                              edgeless=False)
+    if proj_imgs is None:
+        return
 
     # Generate the fold pairs according to leave-one-out validation.
-    folds = gen_unpacked_folds(proj_ids=[1, 2],
-                               proj_epochs=proj_epochs,
-                               proj_feats={1: [1, 2, 3, 4, 5], 2: [6, 7, 8, 9, 10]},
-                               as_np_arr=True)
-
+    folds = unpacked_folds(proj_ids=[1, 2],
+                           proj_epochs=proj_epochs,
+                           proj_feats=proj_imgs,
+                           as_np_arr=True)
     if folds is None:
         return
 
-    print(folds)
+    print('Folds have been generated!')
 
 
 if __name__ == '__main__':
