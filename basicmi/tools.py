@@ -7,12 +7,12 @@ import numpy as np
 import scipy.io as sio
 
 
-# utils.py file path - used as a reference point.
-PROJ_UTILS_FILE_PATH = pathlib.Path(__file__)
+# tools.py file path - used as a reference point.
+PROJ_TOOLS_FILE_PATH = pathlib.Path(__file__)
 
 
 # Project related paths (relative to the tools file path).
-PROJ_DIR_PATH = pathlib.Path(PROJ_UTILS_FILE_PATH.parent)
+PROJ_DIR_PATH = pathlib.Path(PROJ_TOOLS_FILE_PATH.parent)
 PROJ_RES_DIR_PATH = pathlib.Path(PROJ_DIR_PATH.joinpath('resources'))
 PROJ_MONTAGES_DIR_PATH = pathlib.Path(PROJ_RES_DIR_PATH.joinpath('montages'))
 PROJ_SUBJECTS_DIR_PATH = pathlib.Path(PROJ_RES_DIR_PATH.joinpath('subjects'))

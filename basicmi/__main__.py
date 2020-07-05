@@ -6,9 +6,9 @@ import numpy as np
 np.random.seed(2435)
 
 import EEGLearn.utils as eeg_utils
+import EEGLearn.train as eeg_train
 
-from basicmi import utils
-
+from basicmi import tools
 
 def extract_subj_psd_feats(epochs, t_min, t_max, freq_bands, n_jobs=3, inc_classes=False, as_np_arr=True):
 
@@ -43,7 +43,7 @@ def extract_subj_psd_feats(epochs, t_min, t_max, freq_bands, n_jobs=3, inc_class
         return np.asarray(samples_x_features_mtx) if as_np_arr else samples_x_features_mtx
 
     # Get the labels associated with each of the epochs.
-    epochs_labels = utils.get_epochs_labels(epochs=epochs)
+    epochs_labels = tools.get_epochs_labels(epochs=epochs)
     if epochs_labels is None:
         return None
 
@@ -129,7 +129,7 @@ def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 
         # Unpack the labels for the ids and samples.
         subj_epochs = proj_epochs[sid]
-        subj_epochs_labels = utils.get_epochs_labels(epochs=subj_epochs)
+        subj_epochs_labels = tools.get_epochs_labels(epochs=subj_epochs)
         for subj_epoch_label in subj_epochs_labels:
             labels.append(subj_epoch_label)
 
@@ -157,12 +157,12 @@ def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 def main():
 
     # Load the cap montage (2D coordinates).
-    neuroscan_coords = utils.get_neuroscan_montage(azim=True, as_np_arr=True)
+    neuroscan_coords = tools.get_neuroscan_montage(azim=True, as_np_arr=True)
     if neuroscan_coords is None:
         return
 
     # Load the subjects into memory.
-    proj_epochs = utils.get_proj_epochs(subj_ids=[1, 2],
+    proj_epochs = tools.get_proj_epochs(subj_ids=[1, 2],
                                         equalise_event_ids=['Left', 'Right', 'Bimanual'],
                                         inc_subj_info_id=True)
     if proj_epochs is None or not proj_epochs.keys():
@@ -193,7 +193,18 @@ def main():
     if folds is None:
         return
 
-    print('Folds have been generated!')
+    # Train a basic, single-frame CNN.
+    cnn_accuracy = []
+    for i in range(folds):
+        cnn_accuracy.append(eeg_train.train(images=samples,
+                                            labels=labels,
+                                            fold=folds[i],
+                                            model_type='cnn',
+                                            batch_size=32,
+                                            num_epochs=10))
+
+    # Print the average classification accuracy.
+    print('Average CNN Accuracy is %d' % (np.mean(cnn_accuracy) * 100))
 
 
 if __name__ == '__main__':
