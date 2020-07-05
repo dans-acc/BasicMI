@@ -63,7 +63,7 @@ def extract_proj_psd_feats(proj_epochs, t_min, t_max, freq_bands, n_jobs=3, inc_
 
     # Loop through each of the sid, epoch pairs, generating a feature matrix for each.
     proj_feats = {}
-    for sid, subj_epochs in proj_epochs:
+    for sid, subj_epochs in proj_epochs.items():
         proj_feats[sid] = extract_subj_psd_feats(epochs=subj_epochs, t_min=t_min, t_max=t_max, freq_bands=freq_bands,
                                                  n_jobs=n_jobs, inc_classes=inc_classes, as_np_arr=as_np_arr)
 
@@ -124,12 +124,14 @@ def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
         # Unpack the subjects ids and features.
         subj_feats = proj_feats[sid]
         ids += [sid for i in range(len(subj_feats))]
-        samples += subj_feats
+        for subj_feat in subj_feats:
+            samples.append(subj_feat)
 
         # Unpack the labels for the ids and samples.
         subj_epochs = proj_epochs[sid]
         subj_epochs_labels = utils.get_epochs_labels(epochs=subj_epochs)
-        labels += subj_epochs_labels
+        for subj_epoch_label in subj_epochs_labels:
+            labels.append(subj_epoch_label)
 
         assert len(ids) == len(samples) == len(labels)
 
@@ -184,10 +186,10 @@ def main():
         return
 
     # Generate the fold pairs according to leave-one-out validation.
-    folds = unpacked_folds(proj_ids=[1, 2],
-                           proj_epochs=proj_epochs,
-                           proj_feats=proj_imgs,
-                           as_np_arr=True)
+    ids, samples, labels, folds = unpacked_folds(proj_ids=[1, 2],
+                                                 proj_epochs=proj_epochs,
+                                                 proj_feats=proj_imgs,
+                                                 as_np_arr=True)
     if folds is None:
         return
 
