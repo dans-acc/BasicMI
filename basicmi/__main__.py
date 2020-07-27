@@ -30,6 +30,9 @@ def extract_subj_psd_feats(epochs, t_min, t_max, freq_bands, n_jobs=3, inc_class
         # Returns a matrix in the shape of (n_epochs, n_channels, n_freqs)
         psds, freqs = mne.time_frequency.psd_multitaper(inst=epochs, tmin=t_min, tmax=t_max, fmin=f_min, fmax=f_max,
                                                         proj=True, n_jobs=n_jobs)
+
+        print('Freqs: %d' % len(freqs))
+
         if psds is None or freqs is None:
             return None
 
@@ -105,6 +108,11 @@ def gen_proj_imgs(proj_ids, proj_feats, cap_coords, n_grid_points=32, normalise=
     return proj_imgs
 
 
+def gen_img_windows(feats, electrode_positions, n_grid_points=32, normalise=True, edgeless=False):
+    for feat_id, feat_mtx in feats:
+        print('id %d' % feat_id)
+
+
 def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 
     # Validate the parameters.
@@ -176,8 +184,8 @@ def main():
         return
 
     # Generate the feature vectors for each of the subjects epochs.
-    freq_bands = [(4, 7), (8, 13), (13, 30)]
-    proj_feats = extract_proj_psd_feats(proj_epochs=proj_epochs, t_min=0, t_max=1, freq_bands=freq_bands,
+    freq_bands = [(4, 8), (8, 13), (13, 30)]
+    proj_feats = extract_proj_psd_feats(proj_epochs=proj_epochs, t_min=0, t_max=5, freq_bands=freq_bands,
                                         n_jobs=3, inc_classes=False, as_np_arr=True)
     if proj_feats is None:
         return
@@ -191,6 +199,8 @@ def main():
                               edgeless=False)
     if proj_imgs is None:
         return
+
+    gen_img_windows(proj_feats, electrode_positions=neuroscan_coords)
 
     # Generate the fold pairs according to leave-one-out validation.
     ids, samples, labels, folds = unpacked_folds(proj_ids=subjects,
