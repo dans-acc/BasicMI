@@ -1,14 +1,15 @@
-import mne
-
-import pathlib
-
-import numpy as np
-np.random.seed(2435)
-
 import EEGLearn.utils as eeg_utils
 import EEGLearn.train as eeg_train
 
+
+import mne
+import tensorflow as tf
+import numpy as np
+np.random.seed(2435)
+
+
 from basicmi import tools
+
 
 def extract_subj_psd_feats(epochs, t_min, t_max, freq_bands, n_jobs=3, inc_classes=False, as_np_arr=True):
 
@@ -144,26 +145,32 @@ def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
         training_set_indices = np.squeeze(np.nonzero(np.bitwise_not(selected_sid_samples)))
         test_set_indices = np.squeeze(np.nonzero(selected_sid_samples))
 
+        print('+' * 100)
+        print(len(training_set_indices))
+        print(len(test_set_indices))
+
         # Shuffles only the index values within each respective array.
         np.random.shuffle(training_set_indices)
         np.random.shuffle(test_set_indices)
 
         # Add the pairs to the list of folds.
-        folds.append((training_set_indices, test_set_indices))
+        folds.append((np.array(training_set_indices), np.array(test_set_indices)))
 
     return ids, samples, labels, folds
 
 
 def main():
 
-    # Load the cap montage (2D coordinates).
+    # Load the electrode cap, implicitly projecting 3D positions to 2D.
     neuroscan_coords = tools.get_neuroscan_montage(azim=True, as_np_arr=True)
     if neuroscan_coords is None:
         return
 
-    # Load the subjects into memory.
-    proj_epochs = tools.get_proj_epochs(subj_ids=[1, 2],
-                                        equalise_event_ids=['Left', 'Right', 'Bimanual'],
+    # The list of subjects used for training.
+    subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+
+    # Load all of the epochs into memory (from .fif files).
+    proj_epochs = tools.get_proj_epochs(subj_ids=subjects, equalise_event_ids=['Left', 'Right', 'Bimanual'],
                                         inc_subj_info_id=True)
     if proj_epochs is None or not proj_epochs.keys():
         return
@@ -176,7 +183,7 @@ def main():
         return
 
     # Generate images from the feature maps.
-    proj_imgs = gen_proj_imgs(proj_ids=[1, 2],
+    proj_imgs = gen_proj_imgs(proj_ids=subjects,
                               proj_feats=proj_feats,
                               cap_coords=neuroscan_coords,
                               n_grid_points=32,
@@ -186,93 +193,49 @@ def main():
         return
 
     # Generate the fold pairs according to leave-one-out validation.
-    ids, samples, labels, folds = unpacked_folds(proj_ids=[1, 2],
+    ids, samples, labels, folds = unpacked_folds(proj_ids=subjects,
                                                  proj_epochs=proj_epochs,
                                                  proj_feats=proj_imgs,
                                                  as_np_arr=True)
     if folds is None:
         return
 
+    print('+-' * 100)
+
+    for f in folds:
+        print('%d %d' % (len(f[0]), len(f[1])))
+
+    print('+-' * 100)
+
+    # Convert some types to np array.
+    samples = np.array(samples)
+
+    # Solves the batching issue.
+    samples = np.expand_dims(samples, axis=0)
+
+    # Labels must apparently start from 0.
+    labels = [label-1 for label in labels]
+    print(labels)
+
+    labels = np.array(labels)
+    folds = np.array(folds)
+
+    print(samples.shape)
+
+    print(type(samples))
+    print(type(folds))
+
     # Train a basic, single-frame CNN.
     cnn_accuracy = []
-    for i in range(folds):
+    for i in range(len(folds)):
         cnn_accuracy.append(eeg_train.train(images=samples,
                                             labels=labels,
                                             fold=folds[i],
                                             model_type='cnn',
                                             batch_size=32,
-                                            num_epochs=10))
-
-    # Print the average classification accuracy.
-    print('Average CNN Accuracy is %d' % (np.mean(cnn_accuracy) * 100))
+                                            num_epochs=60))
+        tf.reset_default_graph()
 
 
 if __name__ == '__main__':
     main()
-
-
-    """
-    subj_data, subj_labels = tools.get_epochs_data_and_labels(epochs=subj_epochs, data=False)
-    freq_bands = [(4, 7), (8, 13), (13, 30)]
-    samples_x_features_mtx = tools.gen_epochs_psd_features(epochs=subj_epochs,
-                                                           t_min=0,
-                                                           t_max=5,
-                                                           freq_bands=freq_bands,
-                                                           n_jobs=2,
-                                                           include_classes=False,
-                                                           as_np_arr=True)                                                           
-    print('The samples_x_features_mtx is:')
-    print(samples_x_features_mtx.shape)
-    """
-
-    """
-    print('^' * 100)
-    print(np.asarray(samples_x_features_mtx).shape)
-    print('v' * 100)
-
-    print('Sample len: %d' % len(samples_x_features_mtx))
-    print('Feature len: %d' % len(samples_x_features_mtx[0]))
-    print(np.asarray(samples_x_features_mtx))
-    """
-    """
-    # Get the neuroscan montage locations and project them onto a 2D layout.
-    neuroscan_coords = tools.get_neuroscan_montage(azim=True)
-    neuroscan_coords = np.asarray(neuroscan_coords)
-
-    # Generate images based on the feature matrix, coordinates, etc.
-    subj_images = {}
-    subj_images[1] = images = tools.gen_images(cap_locations=neuroscan_coords,
-                                               samples_x_features_mtx=samples_x_features_mtx,
-                                               n_grid_points=32,
-                                               normalise=True,
-                                               edgeless=False)
-    """
-
-    """
-    tools.gen_folds(subj_ids=[1],
-                    subj_epochs=proj_epochs,
-                    epoch_feats=subj_images,
-                    as_np_arr=True)
-    """
-
-    """
-    images = tools.gen_images(cap_locations=neuroscan_coords,
-                              samples_x_features_mtx=features,
-                              n_grid_points=32,
-                              normalise=True,
-                              edgeless=False)
-    """
-
-    """
-
-    Delta band is < 4Hz
-    Theta band is 4-8Hz;
-    Alpha band is 8-12Hz;
-    Beta band is 13-30Hz;
-    Gamma band is > 30Hz
-
-    :param epochs:
-    :param freq_bands: follow the form (f_min, f_max) in order theta, alpha, beta, gamma
-    :return:
-    """
-
