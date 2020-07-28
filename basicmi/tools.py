@@ -24,72 +24,93 @@ MNE_LAYOUTS_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/layouts
 MNE_MONTAGES_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/montages'))
 
 
-def create_logger(name, ch_lvl=logging.DEBUG):
+def create_logger(name, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG):
 
     # Console Handler formatter.
-    fmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fmt = logging.Formatter(fmt=format)
 
-    # Console handler.
+    # Console handler (for displaying the messages on screen.)
     ch = logging.StreamHandler()
-    ch.setLevel(level=ch_lvl)
+    ch.setLevel(level=level)
     ch.setFormatter(fmt=fmt)
 
-    # Init the logger.
+    # Init the console logger.
     logger = logging.getLogger(name)
+    logger.setLevel(level=level)
     logger.addHandler(ch)
 
     return logger
 
 
-# Logger for convenient debugging.
-logger = create_logger(name=__name__, ch_lvl=logging.DEBUG)
+# For debugging tool code.
+_logger = create_logger(name=__name__, level=logging.DEBUG)
 
 
 def get_mat_items(mat_path, mat_keys=None):
 
-    # Check param validity.
+    """
+    Loads and returns key-value pairs from a mat file.
+    :param mat_path: Path: the file path of the mat file that is to be loaded.
+    :param mat_keys: list: contains the keys that are to be returned from the mat file.
+    :return: dict: contains key-value pairs.
+    """
+
+    # Check that the mat file path is valid.
     if mat_path is None or not mat_path.exists() or not mat_path.is_file() or mat_path.is_dir():
-        logger.error('Invalid parameters')
+        _logger.error('Invalid mat path: %s', mat_path)
         return None
 
-    # Read the mat file.
+    # Read the items from within the mat file.
     mat_file_dict = sio.loadmat(file_name=str(mat_path))
     if mat_file_dict is None:
-        logger.error('Unable to load mat dict')
+        _logger.error('Unable to load mat file: %s', mat_path)
         return None
     elif mat_keys is None:
-        logger.info('Parameter mat_keys is none, returning loaded mat dict')
+        _logger.debug('Parameter mat_keys is None. Returning all mat key-value pairs.')
         return mat_file_dict
 
-    # Obtain only specific mat items (defined by mat_keys).
+    # Return only the defined mat keys from the file.
+    _logger.debug('Parameter mat_keys is %s. Returning all mat_keys key-value pairs.', mat_keys)
     return {key: mat_file_dict.get(key) for key in mat_keys}
 
 
 def get_subj_epochs(subj_id, preload=True, equalise_event_ids=None, inc_subj_info_id=True):
 
-    # Check subject id is not none.
+    """
+    Load and instantiate a given subjects Epochs instance.
+    :param subj_id: int: the ID associated with the subject.
+    :param preload: bool: whether the epochs should be loaded directly into memory or load them only when required.
+    :param equalise_event_ids: list: contains the epoch classes that should be equalised with respect to time.
+    :param inc_subj_info_id: bool: whether additional subject ID data is to be generated and appended to the loaded
+        Epochs instance.
+    :return: Epochs: an instance containing the subjects epoch data.
+    """
+
+    # Check that the subject id is valid.
     if subj_id is None:
-        logger.error('Parameter subj_id is none')
+        _logger.error('Parameter subj_id is None.')
         return None
 
-    # Get the subject path based on the ID.
+    # Get the subject .fif file path based on the ID.
     subj_path = pathlib.Path(PROJ_SUBJECTS_DIR_PATH.joinpath('S%s//epochs_epo.fif' % str(subj_id)))
     if not subj_path.exists() or not subj_path.is_file() or subj_path.is_dir():
-        logger.error('File path %s refers to an invalid subject file', subj_path.absolute())
+        _logger.error('File path %s refers to an invalid subject file.', subj_path.absolute())
         return None
 
-    # Read the subjects epochs.
+    # Read the subjects epochs data.
     subj_epochs = mne.read_epochs(str(subj_path.absolute()), preload=preload)
     if subj_epochs is None:
-        logging.error('Unable to read epoch data from file %s', subj_path.absolute())
+        _logger.error('Unable to read epoch data from file %s.', subj_path.absolute())
         return None
 
     # If not none, equalise the defined classes.
     if equalise_event_ids is not None:
+        _logger.debug('Equalising classes %s for subject %s (%s).', equalise_event_ids, str(subj_id), subj_path.absolute())
         subj_epochs.equalize_event_counts(event_ids=equalise_event_ids)
 
     # Generate and add epoch subject id.
     if inc_subj_info_id:
+        _logger.debug('Adding subject ID info for subject %s (%s).', str(subj_id), subj_path.absolute())
         subj_info = {'id': int(subj_id)}
         subj_epochs.info['subject_info'] = subj_info
 
@@ -97,6 +118,16 @@ def get_subj_epochs(subj_id, preload=True, equalise_event_ids=None, inc_subj_inf
 
 
 def get_proj_epochs(subj_ids, preload=True, equalise_event_ids=None, inc_subj_info_id=True):
+
+    """
+    Load and instantiate Epochs instances for a collection of subjects.
+    :param subj_ids: list: the collection of int subject IDs that are to be loaded.
+    :param preload: bool: whether the epochs should be loaded directly into memory or load them only when required.
+    :param equalise_event_ids: list: contains the epoch classes that should be equalised with respect to time.
+    :param inc_subj_info_id: bool: whether additional subject ID data is to be generated and appended to the loaded
+        Epochs instance.
+    :return: dict: containing loaded Epochs i.e. ID-Epochs mapping.
+    """
 
     # Check param validity.
     if subj_ids is None:
@@ -111,8 +142,10 @@ def get_proj_epochs(subj_ids, preload=True, equalise_event_ids=None, inc_subj_in
                                       equalise_event_ids=equalise_event_ids,
                                       inc_subj_info_id=inc_subj_info_id)
         if subj_epochs is None:
+            _logger.warning('Subject %s Epochs is None.', str(subj_id))
             continue
         proj_epochs[subj_id] = subj_epochs
+        _logger.debug('Subject %s Epochs loaded and added.', str(subj_id))
 
     return proj_epochs
 
