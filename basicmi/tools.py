@@ -131,8 +131,10 @@ def get_proj_epochs(subj_ids, preload=True, equalise_event_ids=None, inc_subj_in
 
     # Check param validity.
     if subj_ids is None:
+        _logger.error('Parameter subj_ids is None. Returning None.')
         return None
     elif not subj_ids:
+        _logger.debug('Parameter subj_ids is empty. Returning empty dict.')
         return {}
 
     # Read all of the resource subject epochs.
