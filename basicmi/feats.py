@@ -75,7 +75,8 @@ def extract_proj_psd_feats(proj_epochs, t_min, t_max, freq_bands, n_jobs=3, inc_
 def extract_subj_win_psd_feats(epochs, windows, freq_bands, n_jobs=3, inc_classes=False, as_np_arr=True):
     psds_windows = []
     for i in range(windows):
-        psds_windows.append(extract_subj_psd_feats(epochs=epochs, t_min=windows[i][0], t_max=windows[i][0],
+        _logger.debug('Generating windowed (%s to %s) features.', str(windows[i][0]), str(windows[i][1]))
+        psds_windows.append(extract_subj_psd_feats(epochs=epochs, t_min=windows[i][0], t_max=windows[i][1],
                                                    freq_bands=freq_bands, n_jobs=n_jobs, inc_classes=inc_classes,
                                                    as_np_arr=as_np_arr))
         _logger.debug('Appended window %s %s.', str(windows[i][0]), str(windows[i][0]))
