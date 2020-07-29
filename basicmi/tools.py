@@ -216,6 +216,18 @@ def set_epochs_mne_montage(epochs, kind, new=False):
 
 
 def get_epochs_labels(epochs):
+
+    # Get the labels that are associated with Epochs.
     if epochs is not None:
         return epochs.events[:, 2]
     return None
+
+
+def frange(start, stop, step, as_np_arr=False):
+
+    # The equivalent of range, however, is to be used for floats.
+    frange_arr = np.arange(start, stop, step)
+    return frange_arr if as_np_arr else list(frange_arr)
+
+
+
