@@ -5,7 +5,7 @@ import mne
 import tensorflow as tf
 import numpy as np
 
-from basicmi import tools
+from basicmi import utils
 from basicmi import feats
 
 
@@ -43,27 +43,6 @@ def gen_proj_imgs(proj_ids, proj_feats, cap_coords, n_grid_points=32, normalise=
     return proj_imgs
 
 
-def gen_subj_win_img(subj_feats, cap_coords, n_grid_points=32, normalise=True, edgeless=False):
-    win_imgs = []
-    for i in range(len(subj_feats)):
-        # TODO: features should not be extracted as such. There is a clear dependency when unfolding.
-        win_imgs.append(gen_subj_imgs(subj_feats=subj_feats[i], cap_coords=cap_coords, n_grid_points=n_grid_points,
-                                      normalise=normalise, edgeless=edgeless))
-    return np.array(win_imgs)
-
-
-def gen_proj_win_imgs(proj_ids, proj_feats, cap_coords, n_grid_points=32, normalise=True, edgeless=False):
-    proj_imgs = {}
-    for sid in np.unique(proj_ids):
-        subj_imgs = gen_subj_win_img(subj_feats=proj_feats[sid], cap_coords=cap_coords, n_grid_points=n_grid_points,
-                                     normalise=normalise, edgeless=edgeless)
-        if subj_imgs is None:
-            raise RuntimeError('Unable to generate images for subject: %d' % sid)
-        print('Adding img win: %s' % subj_imgs)
-        proj_imgs[sid] = subj_imgs
-    return proj_imgs
-
-
 def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 
     # Validate the parameters.
@@ -90,7 +69,7 @@ def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 
         # Unpack the labels for the ids and samples.
         subj_epochs = proj_epochs[sid]
-        subj_epochs_labels = tools.get_epochs_labels(epochs=subj_epochs)
+        subj_epochs_labels = utils.get_epochs_labels(epochs=subj_epochs)
         for subj_epoch_label in subj_epochs_labels:
             labels.append(subj_epoch_label)
 
@@ -121,58 +100,65 @@ def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 
 def main():
 
+    # The list of subjects used for training.
+    subjects = [1, 2, 3, 4, 5, 6]
+
     # Init lib pseudo-random generators.
     np.random.seed(2435)
     tf.set_random_seed(2435)
 
     # Load the electrode cap, implicitly projecting 3D positions to 2D.
-    neuroscan_coords = tools.get_neuroscan_montage(azim=True, as_np_arr=True)
+    neuroscan_coords = utils.get_neuroscan_montage(azim=True, as_np_arr=True)
     if neuroscan_coords is None:
         return
 
-    # The list of subjects used for training.
-    subjects = [1, 2, 3, 4, 5, 6]
-
-    # Load all of the epochs into memory (from .fif files).
-    proj_epochs = tools.get_proj_epochs(subj_ids=subjects, equalise_event_ids=['Left', 'Right', 'Bimanual'],
-                                        inc_subj_info_id=True)
-    if proj_epochs is None or not proj_epochs.keys():
+    # Load all subject mat files, creating corresponding Epochs instances for each.
+    subject_epochs = utils.get_epochs(subj_ids=subjects, equalise_event_ids=['Left', 'Right', 'Bimanual'],
+                                      inc_subj_info_id=True)
+    if subject_epochs is None or not subject_epochs.keys():
         return
 
-    # Generate the feature vectors for each of the subjects epochs.
-    freq_bands = [(4, 8), (8, 13), (13, 30)]
-    proj_feats = feats.extract_proj_psd_feats(proj_epochs=proj_epochs, t_min=0, t_max=5, freq_bands=freq_bands,
-                                              n_jobs=3, inc_classes=False, as_np_arr=True)
+    # The windows and the frequency bands used to generate the images.
+    windows = utils.gen_windows(0, 5, 0.5)
+    frequency_bands = [(4, 8), (8, 13), (13, 30)]
+
+    # Generate the windows for each of the epochs.
+    subject_images = {}
+    for subject_id, subject_epochs in subject_epochs.items():
+        images = []
+        for t_min, t_max in windows:
+            subject_feats = feats.get_subject_psd_feats(subject_epochs=subject_epochs, t_min=t_min, t_max=t_max,
+                                                        freq_bands=frequency_bands, n_jobs=10, append_classes=False,
+                                                        as_np_arr=True)
+            img = gen_subj_imgs(subj_feats=subject_feats, cap_coords=neuroscan_coords, n_grid_points=32, normalise=True,
+                                edgeless=False)
+            images.append(img)
+        images = np.array(images)
+        subject_images[subject_id] = images
+        print('Generated images for subject %d. Shape: %s', subject_id, str(images.shape))
 
     """
-    TODO: move the window generating code to the utils file.
-    time_windows = []
-    for time in range(0, 10):
-        t = time * 0.5
-        time_windows.append((t, t + 0.5))
-    print('Time windows: %s' % time_windows)
-
-    # TODO: dont call this directly. Instead, ram this into a for loop.
-    proj_feats = feats.extract_proj_win_psd_feats(proj_epochs=proj_epochs, windows=time_windows, freq_bands=freq_bands,
-                                                  n_jobs=20, inc_classes=False, as_np_arr=True)
-    """
-
-    if proj_feats is None:
+    subject_feats = feats.get_psds_feats(epochs=subject_epochs, t_min=0, t_max=5, freq_bands=frequency_bands,
+                                             n_jobs=3, append_classes=False, as_np_arr=True)
+    if subject_feats is None or not subject_feats:
         return
+
+    # Generate a list of windows for the epochs.
 
     # Generate images from the feature maps.
     proj_imgs = gen_proj_imgs(proj_ids=subjects,
-                              proj_feats=proj_feats,
+                              proj_feats=subject_feats,
                               cap_coords=neuroscan_coords,
                               n_grid_points=32,
                               normalise=True,
                               edgeless=False)
     if proj_imgs is None:
         return
+    
 
     # Generate the fold pairs according to leave-one-out validation.
     ids, samples, labels, folds = unpacked_folds(proj_ids=subjects,
-                                                 proj_epochs=proj_epochs,
+                                                 proj_epochs=subject_epochs,
                                                  proj_feats=proj_imgs,
                                                  as_np_arr=True)
     if folds is None:
@@ -213,6 +199,7 @@ def main():
                                             batch_size=32,
                                             num_epochs=60))
         tf.reset_default_graph()
+    """
 
 
 if __name__ == '__main__':
