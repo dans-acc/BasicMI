@@ -7,7 +7,7 @@ import numpy as np
 import scipy.io as sio
 
 
-# tools.py file path - used as a reference point.
+# utils.py file path - used as a reference point.
 PROJ_TOOLS_FILE_PATH = pathlib.Path(__file__)
 
 
@@ -46,7 +46,7 @@ def create_logger(name, format='%(asctime)s - %(name)s - %(levelname)s - %(messa
 _logger = create_logger(name=__name__, level=logging.DEBUG)
 
 
-def get_mat_items(mat_path, mat_keys=None):
+def read_mat_items(mat_path, mat_keys=None):
 
     """
     Loads and returns key-value pairs from a mat file.
@@ -117,7 +117,7 @@ def get_subj_epochs(subj_id, preload=True, equalise_event_ids=None, inc_subj_inf
     return subj_epochs
 
 
-def get_proj_epochs(subj_ids, preload=True, equalise_event_ids=None, inc_subj_info_id=True):
+def get_epochs(subj_ids, preload=True, equalise_event_ids=None, inc_subj_info_id=True):
 
     """
     Load and instantiate Epochs instances for a collection of subjects.
@@ -165,69 +165,101 @@ def concat_epochs(epochs, add_offset=False, equalise_event_ids=None):
     return concat
 
 
-def get_neuroscan_montage(azim=False, as_np_arr=True):
-
-    # Get the location to the neuroscan montage path.
-    neuroscan_path = pathlib.Path(PROJ_MONTAGES_DIR_PATH.joinpath('neuroscan_montage.mat'))
-    if not neuroscan_path.exists() or not neuroscan_path.is_file() or neuroscan_path.is_dir():
-        return None
-
-    # Get the 3D coordinates within the mat file.
-    neuroscan_items = get_mat_items(mat_path=neuroscan_path, mat_keys=['A'])
-    if neuroscan_items is None:
-        return None
-
-    # Get the neuroscan 3d coords.
-    neuroscan_3d_coords = neuroscan_items['A']
-    if not azim:
-        return np.asarray(neuroscan_3d_coords) if as_np_arr else neuroscan_3d_coords
-
-    # Convert the 3D coords into 2D coords and return.
-    neuroscan_2d_coords = []
-    for coord in neuroscan_3d_coords:
-        neuroscan_2d_coords.append(eeg_utils.azim_proj(coord))
-
-    return np.asarray(neuroscan_2d_coords) if as_np_arr else neuroscan_3d_coords
+def generate_windows(start, stop, step, as_np_arr=False):
+    windows = []
+    for time in np.arange(start, stop, step):
+        windows.append((time, time+step))
+    return np.array(windows) if as_np_arr else windows
 
 
-def get_mne_montage(kind):
-    if kind is not None:
-        return mne.channels.make_standard_montage(kind=kind)
-    return None
+
+def gen_subj_imgs(subj_feats, cap_coords, n_grid_points=32, normalise=True, edgeless=False):
+
+    # Convert the necessary parameters to np arrays (if not already).
+    if not isinstance(subj_feats, np.ndarray):
+        subj_feats = np.asarray(subj_feats)
+    if not isinstance(cap_coords, np.ndarray):
+        cap_coords = np.asarray(cap_coords)
+
+    # Delegate the task of generating subject images to the tf_EEGLearn lib.
+    return eeg_utils.gen_images(locs=cap_coords, features=subj_feats,
+                                n_gridpoints=n_grid_points, normalize=normalise,
+                                edgeless=edgeless)
 
 
-def set_epochs_mne_montage(epochs, kind, new=False):
+def gen_proj_imgs(proj_ids, proj_feats, cap_coords, n_grid_points=32, normalise=True, edgeless=False):
 
-    # Check param validity.
-    if epochs is None or kind is None:
-        return None, None
+    # Validate the parameters.
+    if proj_ids is None or proj_feats is None or cap_coords is None:
+        raise ValueError('Parameter(s) are None.')
+    elif not proj_ids:
+        return []
 
-    # Get the montage.
-    montage = get_mne_montage(kind=kind)
-    if montage is None:
-        return None, None
+    # Generate images for each of the subjects.
+    proj_imgs = {}
+    for sid in np.unique(proj_ids):
+        subj_imgs = gen_subj_imgs(subj_feats=proj_feats[sid], cap_coords=cap_coords, n_grid_points=n_grid_points,
+                                  normalise=normalise, edgeless=edgeless)
+        if subj_imgs is None:
+            raise RuntimeError('Unable to generate images for subject: %d' % sid)
+        proj_imgs[sid] = subj_imgs
 
-    # Set the epochs montage (on a potentially new epochs).
-    epochs = epochs.copy() if new else epochs
-    epochs.set_montage(montage=montage)
-
-    # Return the epochs instance and the loaded montage.
-    return epochs, montage
-
-
-def get_epochs_labels(epochs):
-
-    # Get the labels that are associated with Epochs.
-    if epochs is not None:
-        return epochs.events[:, 2]
-    return None
+    return proj_imgs
 
 
-def frange(start, stop, step, as_np_arr=False):
+def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 
-    # The equivalent of range, however, is to be used for floats.
-    frange_arr = np.arange(start, stop, step)
-    return frange_arr if as_np_arr else list(frange_arr)
+    # Validate the parameters.
+    if proj_ids is None or proj_epochs is None or proj_feats is None:
+        raise ValueError('Parameter(s) are None.')
+    elif not proj_ids:
+        return []
+
+    # Get a sorted list of unique ids.
+    proj_ids = np.sort(np.unique(proj_ids))
+
+    # Unpack the subject ids and samples.
+    ids = []
+    samples = []
+    labels = []
+    for sid in proj_ids:
+
+        # Unpack the subjects ids and features.
+        subj_feats = proj_feats[sid]
+        # TODO: might have to access labels with subj_feats[0]. First dimen represents the windows. CHECK THIS!
+        ids += [sid for i in range(len(subj_feats))]
+        for subj_feat in subj_feats:
+            samples.append(subj_feat)
+
+        # Unpack the labels for the ids and samples.
+        subj_epochs = proj_epochs[sid]
+        subj_epochs_labels = utils.get_epochs_labels(epochs=subj_epochs)
+        for subj_epoch_label in subj_epochs_labels:
+            labels.append(subj_epoch_label)
+
+        assert len(ids) == len(samples) == len(labels)
+
+    # Generate pairs of index values, representing the training and test sets.
+    folds = []
+    for sid in proj_ids:
+
+        # Generate test (selected ids) and training (not selected ids) sets based on the selected sid samples.
+        selected_sid_samples = ids == sid
+        training_set_indices = np.squeeze(np.nonzero(np.bitwise_not(selected_sid_samples)))
+        test_set_indices = np.squeeze(np.nonzero(selected_sid_samples))
+
+        print('+' * 100)
+        print(len(training_set_indices))
+        print(len(test_set_indices))
+
+        # Shuffles only the index values within each respective array.
+        np.random.shuffle(training_set_indices)
+        np.random.shuffle(test_set_indices)
+
+        # Add the pairs to the list of folds.
+        folds.append((np.array(training_set_indices), np.array(test_set_indices)))
+
+    return ids, samples, labels, folds
 
 
 

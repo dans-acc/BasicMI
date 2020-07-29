@@ -30,6 +30,10 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Prevents the subject data and runs from being pushed.
+basicmi/resources/subjects
+basicmi/runs
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.

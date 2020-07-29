@@ -1,5 +1,6 @@
 import logging
 
+from typing import List, Dict, Callable
 
 import mne
 import numpy as np
@@ -64,3 +65,10 @@ def get_psds_feats(epochs, t_min, t_max, freq_bands, n_jobs=3, append_classes=Fa
                                                              freq_bands=freq_bands, n_jobs=n_jobs,
                                                              append_classes=append_classes, as_np_arr=as_np_arr)
     return subject_features
+
+
+def get_features(epochs: Dict[int, mne.Epochs], target: Callable = None, kwargs=None) -> Dict[int, np.ndarray]:
+    features = {}
+    for subject_id, subject_epochs in epochs.items():
+        subject_features = target(**kwargs)
+    return features

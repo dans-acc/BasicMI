@@ -15,7 +15,7 @@ _logger = utils.create_logger(name=__name__, level=logging.DEBUG)
 def get_subjects_epochs(subject_id: int, preload: bool = True, equalise_event_ids: List[str] = None,
                         add_subject_id_info: bool = True) -> mne.Epochs:
 
-    _logger.info('Loading Epochs for subject %d', subject_id)
+    _logger.info('Loading Epochs for subject %d.', subject_id)
 
     # Read the subjects epoch data.
     subjects_path = pathlib.Path(pathlib.Path(__file__).parent
@@ -52,3 +52,5 @@ def get_epochs(subject_ids: List[int], preload: bool = True, equalise_event_ids:
 
 def get_epochs_labels(epochs: mne.Epochs):
     return epochs.events[:, 2]
+
+
