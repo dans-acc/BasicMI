@@ -48,3 +48,7 @@ def get_epochs(subject_ids: List[int], preload: bool = True, equalise_event_ids:
         epochs[subject_id] = subjects_epochs
         _logger.debug('Added Epochs for subject %d.', subject_id)
     return epochs
+
+
+def get_epochs_labels(epochs: mne.Epochs):
+    return epochs.events[:, 2]
