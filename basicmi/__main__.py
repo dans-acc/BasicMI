@@ -43,6 +43,27 @@ def gen_proj_imgs(proj_ids, proj_feats, cap_coords, n_grid_points=32, normalise=
     return proj_imgs
 
 
+def gen_subj_win_img(subj_feats, cap_coords, n_grid_points=32, normalise=True, edgeless=False):
+    win_imgs = []
+    for i in range(len(subj_feats)):
+        # TODO: features should not be extracted as such. There is a clear dependency when unfolding.
+        win_imgs.append(gen_subj_imgs(subj_feats=subj_feats[i], cap_coords=cap_coords, n_grid_points=n_grid_points,
+                                      normalise=normalise, edgeless=edgeless))
+    return np.array(win_imgs)
+
+
+def gen_proj_win_imgs(proj_ids, proj_feats, cap_coords, n_grid_points=32, normalise=True, edgeless=False):
+    proj_imgs = {}
+    for sid in np.unique(proj_ids):
+        subj_imgs = gen_subj_win_img(subj_feats=proj_feats[sid], cap_coords=cap_coords, n_grid_points=n_grid_points,
+                                     normalise=normalise, edgeless=edgeless)
+        if subj_imgs is None:
+            raise RuntimeError('Unable to generate images for subject: %d' % sid)
+        print('Adding img win: %s' % subj_imgs)
+        proj_imgs[sid] = subj_imgs
+    return proj_imgs
+
+
 def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 
     # Validate the parameters.
@@ -62,6 +83,7 @@ def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 
         # Unpack the subjects ids and features.
         subj_feats = proj_feats[sid]
+        # TODO: might have to access labels with subj_feats[0]. First dimen represents the windows. CHECK THIS!
         ids += [sid for i in range(len(subj_feats))]
         for subj_feat in subj_feats:
             samples.append(subj_feat)
@@ -109,7 +131,7 @@ def main():
         return
 
     # The list of subjects used for training.
-    subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    subjects = [1, 2, 3, 4, 5, 6]
 
     # Load all of the epochs into memory (from .fif files).
     proj_epochs = tools.get_proj_epochs(subj_ids=subjects, equalise_event_ids=['Left', 'Right', 'Bimanual'],
@@ -118,14 +140,22 @@ def main():
         return
 
     # Generate the feature vectors for each of the subjects epochs.
-    """
-    proj_feats = extract_proj_psd_feats(proj_epochs=proj_epochs, t_min=0, t_max=5, freq_bands=freq_bands,
-                                        n_jobs=3, inc_classes=False, as_np_arr=True)
-    """
-
     freq_bands = [(4, 8), (8, 13), (13, 30)]
+    proj_feats = feats.extract_proj_psd_feats(proj_epochs=proj_epochs, t_min=0, t_max=5, freq_bands=freq_bands,
+                                              n_jobs=3, inc_classes=False, as_np_arr=True)
 
-    proj_feats
+    """
+    TODO: move the window generating code to the utils file.
+    time_windows = []
+    for time in range(0, 10):
+        t = time * 0.5
+        time_windows.append((t, t + 0.5))
+    print('Time windows: %s' % time_windows)
+
+    # TODO: dont call this directly. Instead, ram this into a for loop.
+    proj_feats = feats.extract_proj_win_psd_feats(proj_epochs=proj_epochs, windows=time_windows, freq_bands=freq_bands,
+                                                  n_jobs=20, inc_classes=False, as_np_arr=True)
+    """
 
     if proj_feats is None:
         return
@@ -139,8 +169,6 @@ def main():
                               edgeless=False)
     if proj_imgs is None:
         return
-
-    gen_img_windows(proj_feats, electrode_positions=neuroscan_coords)
 
     # Generate the fold pairs according to leave-one-out validation.
     ids, samples, labels, folds = unpacked_folds(proj_ids=subjects,
