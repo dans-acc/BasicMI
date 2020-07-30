@@ -20,22 +20,30 @@ def main():
     np.random.seed(pseudo_random_seed)
     tf.set_random_seed(pseudo_random_seed)
 
+    # Read and load the electrode cap locations.
+    electrode_locations = montages.get_neuroscan_montage(apply_azim=True)
+
     # Attributes defining what data should be loaded.
     load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     equalise_event_ids = ['Left', 'Right', 'Bimanual']
-
-    # Read and load the electrode cap locations.
-    electrode_locations = montages.get_neuroscan_montage(apply_azim=True)
 
     # Read and load epochs that we are concerned with.
     epochs = subjects.get_epochs(subject_ids=load_subjects, preload=True, equalise_event_ids=equalise_event_ids,
                                  add_subject_id_info=True)
 
-    # Generate features for each of the epochs.
-    bands = [(4, 8), (8, 13), (13, 30)]
-    windows = utils.generate_windows(0, 5, 0.5)
+    # Generate leave one out cross validation fold pairs based on the loaded epochs.
+    trial_ids, trial_labels, fold_pairs = subjects.get_loocv_fold_pairs(epochs=epochs)
 
-    feats = features.get_psd_features(epochs=epochs, windows=windows, bands=bands)
+    # The bands and windows defining the features that are to be extracted.
+    bands = [(4, 8), (8, 13), (13, 30)]
+    windows = utils.generate_windows(start=0, stop=5, step=0.5)
+
+    # Generate PSD features for all of the loaded epochs; then concatenate them into one.
+    epoch_feats = features.get_psd_features(epochs=epochs, windows=windows, bands=bands)
+    feats = features.concat_features(windows=len(windows), epoch_feats=epoch_feats)
+
+    # Generate the images that are to be used for training the models.
+
 
 
 if __name__ == '__main__':
