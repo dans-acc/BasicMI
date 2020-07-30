@@ -54,3 +54,11 @@ def get_epochs_labels(epochs: mne.Epochs):
     return epochs.events[:, 2]
 
 
+def get_labels(epochs: Dict[int, mne.Epochs]):
+    pass
+
+
+def get_loo_fold_pairs():
+    pass
+
+

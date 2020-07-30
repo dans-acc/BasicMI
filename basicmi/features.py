@@ -28,11 +28,9 @@ def get_epoch_psd_features(subject_epochs: mne.Epochs, windows: List[Tuple[float
 
         # For each of the windows generate PSDS features for the defined bands.
         t_min, t_max = windows[window_idx]
-
         _logger.info('Generating PSD features for window: %s - %s.', str(t_min), str(t_max))
 
         for f_min, f_max in bands:
-
             _logger.debug('Generating PSD features for band: %s - %s', str(f_min), str(f_max))
 
             # Returns a matrix in the shape of n_epochs, n_channels, n_freqs.
@@ -45,7 +43,6 @@ def get_epoch_psd_features(subject_epochs: mne.Epochs, windows: List[Tuple[float
                     mean_channel_psd = channel.mean()
                     mtx[window_idx][epoch_idx].append(mean_channel_psd)
 
-    # Finally, convert the list matrix into a numpy matrix and return.
     np_mtx = np.asarray(mtx)
     _logger.debug('Generated feature matrix: %s', str(np_mtx.shape))
     return np_mtx

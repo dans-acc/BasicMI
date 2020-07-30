@@ -32,7 +32,11 @@ def main():
                                  add_subject_id_info=True)
 
     # Generate features for each of the epochs.
-    # Generate folds for each of the epochs.
+    bands = [(4, 8), (8, 13), (13, 30)]
+    windows = utils.generate_windows(0, 5, 0.5)
+
+    feats = features.get_psd_features(epochs=epochs, windows=windows, bands=bands)
+
 
 if __name__ == '__main__':
     main()
