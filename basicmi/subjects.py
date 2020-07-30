@@ -51,10 +51,12 @@ def get_epochs(subject_ids: List[int], preload: bool = True, equalise_event_ids:
 
 
 def get_epochs_labels(epochs: mne.Epochs):
+
+    # Get the labels associated with the trials of an epoch.
     return epochs.events[:, 2]
 
 
-def get_labels(epochs: Dict[int, mne.Epochs]):
+def get_labels(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
 
     # A concatenated list of sorted epochs trial labels.
     labels = []
@@ -78,7 +80,12 @@ def get_labels(epochs: Dict[int, mne.Epochs]):
     return np.asarray(labels)
 
 
+def get_epochs_label_ids(epochs: mne.Epochs) -> np.ndarray:
+    pass
 
+
+def get_label_ids(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
+    pass
 
 
 def get_loo_fold_pairs():
