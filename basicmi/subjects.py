@@ -134,8 +134,8 @@ def get_loocv_fold_pairs(epochs: Dict[int, mne.Epochs]) -> Tuple[np.ndarray, np.
         training_set_indices = np.squeeze(np.nonzero(np.bitwise_not(selected_ids)))
         test_set_indices = np.squeeze(np.nonzero(selected_ids))
 
-        _logger.debug('Subject %d training set is %d and test set is %d in length.', unique_subject_id,
-                      len(training_set_indices), len(test_set_indices))
+        _logger.debug('Subject %d (with %d trials) training set is %d and test set is %d in length.', unique_subject_id,
+                      len(epochs[unique_subject_id]), len(training_set_indices), len(test_set_indices))
 
         # Shuffle only the the index values within each respective set.
         np.random.shuffle(training_set_indices)
