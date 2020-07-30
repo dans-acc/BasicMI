@@ -1,7 +1,7 @@
 import logging
 import pathlib
 
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 import mne
 import numpy as np
@@ -94,7 +94,7 @@ def get_trial_ids(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
 
     # Loop through all subjects concatenating their list of ids to the overall list.
     unique_subject_ids = np.sort(np.unique(epochs.keys()))
-    for subject_id in epochs:
+    for subject_id in unique_subject_ids:
 
         # Because we are operating on a sorted list, all epochs must be present.
         if epochs[subject_id] is None:
@@ -111,7 +111,39 @@ def get_trial_ids(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
     return np.asarray(ids)
 
 
-def get_loo_fold_pairs():
-    pass
+def get_loocv_fold_pairs(epochs: Dict[int, mne.Epochs]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+
+    # Get all of the IDs and labels for all trials within the epochs.
+    ids = get_trial_ids(epochs=epochs)
+    labels = get_trial_labels(epochs=epochs)
+
+    # By definition, the two lists should match.
+    assert len(labels) == len(ids)
+
+    _logger.debug('List of IDs (%d) and labels (%d) generated for all subject Epochs.', len(ids), len(labels))
+
+    # Leave one out cross validation pairs containing indices.
+    folds = []
+
+    # Generate a list of folds representing the training and test sets.
+    unique_subject_ids = np.sort(np.unique(epochs.keys()))
+    for unique_subject_id in unique_subject_ids:
+
+        # Generate test (selected ids) and training (not selected ids) sets based on the selected sid samples.
+        selected_ids = ids == unique_subject_id
+        training_set_indices = np.squeeze(np.nonzero(np.bitwise_not(selected_ids)))
+        test_set_indices = np.squeeze(np.nonzero(selected_ids))
+
+        _logger.debug('Subject %d training set is %d and test set is %d in length.', unique_subject_id,
+                      len(training_set_indices), len(test_set_indices))
+
+        # Shuffle only the the index values within each respective set.
+        np.random.shuffle(training_set_indices)
+        np.random.shuffle(test_set_indices)
+
+        # Add the pairs to the list of folds.
+        folds.append((np.array(training_set_indices), np.array(test_set_indices)))
+
+    return ids, labels, np.asarray(folds)
 
 
