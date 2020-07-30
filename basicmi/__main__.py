@@ -34,6 +34,9 @@ def main():
     # Generate leave one out cross validation fold pairs based on the loaded epochs.
     trial_ids, trial_labels, fold_pairs = subjects.get_loocv_fold_pairs(epochs=epochs)
 
+    # Labels must start from 0 (since for us they start at 1, sub 1 from each label.)
+    trial_labels = [label-1 for label in trial_labels]
+
     # The bands and windows defining the features that are to be extracted.
     bands = [(4, 8), (8, 13), (13, 30)]
     windows = utils.generate_windows(start=0, stop=5, step=0.5)
