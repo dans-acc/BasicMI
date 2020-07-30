@@ -55,7 +55,30 @@ def get_epochs_labels(epochs: mne.Epochs):
 
 
 def get_labels(epochs: Dict[int, mne.Epochs]):
-    pass
+
+    # A concatenated list of sorted epochs trial labels.
+    labels = []
+
+    # Loop through all epochs ids, concatenating all trial labels to the list.
+    unique_subject_ids = np.sort(np.unique(epochs.keys()))
+    for subject_id in unique_subject_ids:
+
+        # Because this operates on a sorted list, all Epochs must be present.
+        if epochs[subject_id] is None:
+            raise ValueError('Epochs for subject %d is None.' % subject_id)
+
+        # Get the labels for the individual epochs; these are to be concatenated together for one big list.
+        subject_epochs = epochs[subject_id]
+        subject_epochs_labels = get_epochs_labels(epochs=subject_epochs)
+
+        # Concatenate the subjects trial labels (classes) to the bigger list.
+        labels.extend(subject_epochs_labels)
+        _logger.debug('%d trial labels for subject %d concatenated.', len(subject_epochs_labels), subject_id)
+
+    return np.asarray(labels)
+
+
+
 
 
 def get_loo_fold_pairs():
