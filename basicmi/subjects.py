@@ -62,7 +62,7 @@ def get_trial_labels(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
     labels = []
 
     # Loop through all epochs ids, concatenating all trial labels to the list.
-    unique_subject_ids = np.sort(np.unique(epochs.keys()))
+    unique_subject_ids = np.sort(np.unique(list(epochs.keys())))
     for subject_id in unique_subject_ids:
 
         # Because this operates on a sorted list, all Epochs must be present.
@@ -93,8 +93,12 @@ def get_trial_ids(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
     ids = []
 
     # Loop through all subjects concatenating their list of ids to the overall list.
-    unique_subject_ids = np.sort(np.unique(epochs.keys()))
+    unique_subject_ids = np.sort(np.unique(list(epochs.keys())))
+
     for subject_id in unique_subject_ids:
+
+        print(subject_id)
+        print(type(subject_id))
 
         # Because we are operating on a sorted list, all epochs must be present.
         if epochs[subject_id] is None:
@@ -126,7 +130,7 @@ def get_loocv_fold_pairs(epochs: Dict[int, mne.Epochs]) -> Tuple[np.ndarray, np.
     folds = []
 
     # Generate a list of folds representing the training and test sets.
-    unique_subject_ids = np.sort(np.unique(epochs.keys()))
+    unique_subject_ids = np.sort(np.unique(list(epochs.keys())))
     for unique_subject_id in unique_subject_ids:
 
         # Generate test (selected ids) and training (not selected ids) sets based on the selected sid samples.
