@@ -77,7 +77,7 @@ def get_trial_labels(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
         labels.extend(subject_epochs_labels)
         _logger.debug('%d trial labels for subject %d concatenated.', len(subject_epochs_labels), subject_id)
 
-    return np.asarray(labels)
+    return np.array(labels)
 
 
 def get_epochs_trial_ids(subject_id: int, epochs: mne.Epochs) -> np.ndarray:
@@ -109,7 +109,7 @@ def get_trial_ids(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
         ids.extend(subject_epochs_trials_ids)
         _logger.debug('%d trial IDS for subject %d concatenated.', len(subject_epochs_trials_ids), subject_id)
 
-    return np.asarray(ids)
+    return np.array(ids)
 
 
 def get_loocv_fold_pairs(epochs: Dict[int, mne.Epochs]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:

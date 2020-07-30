@@ -1,6 +1,8 @@
 import pathlib
 import logging
 
+from typing import List
+
 import mne
 import EEGLearn.utils as eeg_utils
 import numpy as np
