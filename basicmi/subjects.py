@@ -50,13 +50,13 @@ def get_epochs(subject_ids: List[int], preload: bool = True, equalise_event_ids:
     return epochs
 
 
-def get_epochs_labels(epochs: mne.Epochs):
+def get_epochs_trial_labels(epochs: mne.Epochs):
 
     # Get the labels associated with the trials of an epoch.
     return epochs.events[:, 2]
 
 
-def get_labels(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
+def get_trial_labels(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
 
     # A concatenated list of sorted epochs trial labels.
     labels = []
@@ -71,7 +71,7 @@ def get_labels(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
 
         # Get the labels for the individual epochs; these are to be concatenated together for one big list.
         subject_epochs = epochs[subject_id]
-        subject_epochs_labels = get_epochs_labels(epochs=subject_epochs)
+        subject_epochs_labels = get_epochs_trial_labels(epochs=subject_epochs)
 
         # Concatenate the subjects trial labels (classes) to the bigger list.
         labels.extend(subject_epochs_labels)
@@ -80,12 +80,35 @@ def get_labels(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
     return np.asarray(labels)
 
 
-def get_epochs_label_ids(epochs: mne.Epochs) -> np.ndarray:
-    pass
+def get_epochs_trial_ids(subject_id: int, epochs: mne.Epochs) -> np.ndarray:
+
+    # Generates a list of ids that match the number of trials for the epoch.
+    ids = [subject_id for i in range(len(epochs))]
+    return np.asarray(ids)
 
 
-def get_label_ids(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
-    pass
+def get_trial_ids(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
+
+    # A concatenated list of sorted epoch ids (* number of trials).
+    ids = []
+
+    # Loop through all subjects concatenating their list of ids to the overall list.
+    unique_subject_ids = np.sort(np.unique(epochs.keys()))
+    for subject_id in epochs:
+
+        # Because we are operating on a sorted list, all epochs must be present.
+        if epochs[subject_id] is None:
+            raise ValueError('Epochs for subject %d is None.' % subject_id)
+
+        # Get the ids for the individual epochs; there are to be concatenated together for one big list.
+        subject_epochs = epochs[subject_id]
+        subject_epochs_trials_ids = get_epochs_trial_ids(subject_id=subject_id, epochs=subject_epochs)
+
+        # Concatenate the subjects trial ids to the bigger list.
+        ids.extend(subject_epochs_trials_ids)
+        _logger.debug('%d trial IDS for subject %d concatenated.', len(subject_epochs_trials_ids), subject_id)
+
+    return np.asarray(ids)
 
 
 def get_loo_fold_pairs():
