@@ -117,6 +117,8 @@ def get_trial_ids(epochs: Dict[int, mne.Epochs]) -> np.ndarray:
 
 def get_loocv_fold_pairs(epochs: Dict[int, mne.Epochs]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
 
+    _logger.info('Generating leave one out cross validation folds for subjects %s', len(list(epochs.keys())))
+
     # Get all of the IDs and labels for all trials within the epochs.
     ids = get_trial_ids(epochs=epochs)
     labels = get_trial_labels(epochs=epochs)
