@@ -172,6 +172,26 @@ def generate_windows(start, stop, step, as_np_arr=False):
     return np.array(windows) if as_np_arr else windows
 
 
+def generate_images(features: np.ndarray, electrode_locations: np.ndarray, n_grid_points: int = 32,
+                    normalise: bool = True, edgeless: bool = False) -> np.ndarray:
+
+    # Generated images (sorted by windows).
+    images = []
+
+    # For each feature window, generate the corresponding images.
+    for window in range(len(features)):
+
+        # Generate images for the features associated with the feature window.
+        features_images = eeg_utils.gen_images(locs=electrode_locations, features=features[window],
+                                               n_gridpoints=n_grid_points, normalize=normalise,
+                                               edgeless=edgeless)
+
+        # Appending these images results in batching.
+        images.append(features_images)
+        _logger.debug('Generated images of shape %s for window %d.', str(features_images.shape), window)
+
+    return np.array(images)
+
 
 def gen_subj_imgs(subj_feats, cap_coords, n_grid_points=32, normalise=True, edgeless=False):
 
@@ -233,7 +253,7 @@ def unpacked_folds(proj_ids, proj_epochs, proj_feats, as_np_arr=True):
 
         # Unpack the labels for the ids and samples.
         subj_epochs = proj_epochs[sid]
-        subj_epochs_labels = utils.get_epochs_labels(epochs=subj_epochs)
+        subj_epochs_labels = utils.get_epochs_trial_labels(epochs=subj_epochs)
         for subj_epoch_label in subj_epochs_labels:
             labels.append(subj_epoch_label)
 
