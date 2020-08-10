@@ -37,21 +37,7 @@ def get_subjects_epochs(subject_id: int, preload: bool = True, equalise_event_id
 
     # Drop trials that are not within the list.
     if drop_labels is not None:
-
-        _logger.debug('Dropping labels: %s.', str(drop_labels))
-
-        # Get the trial labels that are to be dropped.
-        trial_labels = get_epochs_trial_labels(subjects_epochs)
-        _logger.debug('Number of trial labels before: %d', len(trial_labels))
-
-        # Iterate through each of the trials, dropping it if the associated label is within the drop_labels list.
-        for i in range(len(trial_labels) - 1, -1, -1):
-            if trial_labels[i] in drop_labels:
-                _logger.debug('Dropping index: %d, label: %d', i, trial_labels[i])
-                subjects_epochs.drop([i])
-
-        # This should decrease in size the following call.
-        _logger.debug('Number of trial labels after: %d', len(get_epochs_trial_labels(subjects_epochs)))
+        drop_epochs_trails_by_labels(epochs=subjects_epochs, drop_labels=drop_labels)
 
     return subjects_epochs
 
@@ -67,6 +53,27 @@ def get_epochs(subject_ids: List[int], preload: bool = True, equalise_event_ids:
         epochs[subject_id] = subjects_epochs
         _logger.debug('Added Epochs for subject %d.', subject_id)
     return epochs
+
+
+def drop_epochs_trails_by_labels(epochs: mne.Epochs, drop_labels: List[int]):
+
+    # Get the list of labels associated with the trials.
+    trial_labels = get_epochs_trial_labels(epochs=epochs)
+
+    # Loop through all trials, if their label is to be dropped storing their indices.
+    drop_trial_indices = []
+    for i in range(len(trial_labels)):
+        if trial_labels[i] in drop_labels:
+            _logger.debug('Added trial index %d to be dropped (label: %d)', i, trial_labels[i])
+            drop_trial_indices.append(i)
+
+    # Drop all trials based on index.
+    _logger.debug('Number of labels before dropping %s is %d', str(drop_labels), len(trial_labels))
+    epochs.drop(indices=drop_trial_indices)
+
+    # Check that the number of trials and labels has decreased.
+    trial_labels = get_epochs_trial_labels(epochs=epochs)
+    _logger.debug('Number of labels after dropping %s is %d', str(drop_labels), len(trial_labels))
 
 
 def get_epochs_trial_labels(epochs: mne.Epochs):
