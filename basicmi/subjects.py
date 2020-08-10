@@ -13,7 +13,7 @@ _logger = utils.create_logger(name=__name__, level=logging.DEBUG)
 
 
 def get_subjects_epochs(subject_id: int, preload: bool = True, equalise_event_ids: List[str] = None,
-                        add_subject_id_info: bool = True) -> mne.Epochs:
+                        add_subject_id_info: bool = True, drop_labels: List[int] = None) -> mne.Epochs:
 
     _logger.info('Loading Epochs for subject %d.', subject_id)
 
@@ -35,16 +35,35 @@ def get_subjects_epochs(subject_id: int, preload: bool = True, equalise_event_id
         subject_id_info = {'id': int(subject_id)}
         subjects_epochs.info['subject_info'] = subject_id_info
 
+    # Drop trials that are not within the list.
+    if drop_labels is not None:
+
+        _logger.debug('Dropping labels: %s.', str(drop_labels))
+
+        # Get the trial labels that are to be dropped.
+        trial_labels = get_epochs_trial_labels(subjects_epochs)
+        _logger.debug('Number of trial labels before: %d', len(trial_labels))
+
+        # Iterate through each of the trials, dropping it if the associated label is within the drop_labels list.
+        for i in range(len(trial_labels) - 1, -1, -1):
+            if trial_labels[i] in drop_labels:
+                _logger.debug('Dropping index: %d, label: %d', i, trial_labels[i])
+                subjects_epochs.drop([i])
+
+        # This should decrease in size the following call.
+        _logger.debug('Number of trial labels after: %d', len(get_epochs_trial_labels(subjects_epochs)))
+
     return subjects_epochs
 
 
 def get_epochs(subject_ids: List[int], preload: bool = True, equalise_event_ids: List[str] = None,
-               add_subject_id_info: bool = True) -> Dict[int, mne.Epochs]:
+               add_subject_id_info: bool = True, drop_labels: List[int] = None) -> Dict[int, mne.Epochs]:
     epochs = {}
     for subject_id in np.sort(np.unique(subject_ids)):
         subjects_epochs = get_subjects_epochs(subject_id=subject_id, preload=preload,
                                               equalise_event_ids=equalise_event_ids,
-                                              add_subject_id_info=add_subject_id_info)
+                                              add_subject_id_info=add_subject_id_info,
+                                              drop_labels=drop_labels)
         epochs[subject_id] = subjects_epochs
         _logger.debug('Added Epochs for subject %d.', subject_id)
     return epochs
