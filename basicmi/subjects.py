@@ -1,7 +1,7 @@
 import logging
 import pathlib
 
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 
 import mne
 import numpy as np
@@ -74,6 +74,17 @@ def drop_epochs_trails_by_labels(epochs: mne.Epochs, drop_labels: List[int]):
     # Check that the number of trials and labels has decreased.
     trial_labels = get_epochs_trial_labels(epochs=epochs)
     _logger.debug('Number of labels after dropping %s is %d', str(drop_labels), len(trial_labels))
+
+
+def get_remapped_trail_labels(labels: Union[List, np.ndarray], new_labels: Dict[int, int]):
+
+    # Loop through all of the labels changing them into new ones.
+    for i in range(len(labels)):
+        if labels[i] in new_labels:
+
+            # The label has a new value - change it.
+            labels[i] = new_labels[labels[i]]
+            _logger.debug('Changed %d to %d at index %d', labels[i], new_labels[i], i)
 
 
 def get_epochs_trial_labels(epochs: mne.Epochs):
