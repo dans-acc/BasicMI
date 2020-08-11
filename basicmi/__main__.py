@@ -42,43 +42,54 @@ def main():
 
     # The bands and windows defining the features that are to be extracted.
     bands = [(4, 8), (8, 12), (12, 30)]
-    windows = utils.generate_windows(start=-2, stop=5, step=1)
+    windows = utils.generate_windows(start=-2, stop=5, step=7)
 
-    # Generate a path for where the features are to be stored.
-    epoch_feats_path = pathlib.Path(pathlib.Path(__file__).parent.joinpath('features//psd//S(%s)_W(%s)_B(%s).mat' % (
-        ''.join([]),
-        ''.join([]),
-        ''.join([])
-    )))
+    # Attributes that help uniquely identify files where features are held.
+    file_name_attributes = {'Subjects': load_subjects, 'Equalised': equalise_event_ids, 'Dropped': drop_labels,
+                            'Bands': bands, 'Windows': windows}
+
+    # Path where previously generated features are to be found.
+    epoch_feats_path = pathlib.Path(pathlib.Path(__file__).parent.joinpath(
+        'features//psd//%s.mat' % str(file_name_attributes)))
 
     # Determine if the features have already been generated.
     if epoch_feats_path.exists():
 
-        # Load the previously saved features thereby circumventing the need to generate them each time.
-        feats = utils.read_mat_items(mat_path=epoch_feats_path, mat_keys=['feats'])
+        _logger.info('Loading PSD features...')
+
+        # Load the previously saved features; optimises runs because they do not need to be generated each time.
+        feats = utils.read_mat_items(mat_path=epoch_feats_path, mat_keys=['feats'])['feats']
     else:
 
-        # Generate PSD features for all of the loaded epochs; then concatenate them into one (indexed by windows).
+        _logger.info('Generating PSD features...')
+
+        # Generate features for all of the loaded epochs; concatenate them into one (indexed by windows); then save them
         epoch_feats = features.get_psd_features(epochs=epochs, windows=windows, bands=bands)
         feats = features.concat_features(windows=len(windows), epoch_feats=epoch_feats)
-
-        # Save the generated PSD features; optimises future runs.
         utils.save_mat_items(mat_path=epoch_feats_path, mat_items={'feats': feats})
 
-    # Generate PSD features for all of the loaded epochs; then concatenate them into one.
-    """
-    epoch_feats = features.get_psd_features(epochs=epochs, windows=windows, bands=bands)
-    feats = features.concat_features(windows=len(windows), epoch_feats=epoch_feats)
-    """
+    # The path where previously generates images are to be found.
+    feats_images_path = pathlib.Path(pathlib.Path(__file__).parent.joinpath(
+        'images//psd//%s.mat' % str(file_name_attributes)))
 
-    # TODO: add code for saving and loading images.
+    # Determine if the images have already been generated for the features.
+    if feats_images_path.exists():
 
-    # Generate images based on the generated features.
-    images = utils.generate_images(features=feats, electrode_locations=electrode_locations, n_grid_points=32,
-                                   normalise=False, edgeless=True)
+        _logger.info('Loading images for PSD features...')
+
+        # Load the previously saved images; optimises runs because they do not need to be generated each time.
+        images = utils.read_mat_items(mat_path=feats_images_path, mat_keys=['images'])['images']
+    else:
+
+        _logger.info('Generating images for PSD features...')
+
+        # Generate images based on the generated features; then save them.
+        images = utils.generate_images(features=feats, electrode_locations=electrode_locations,
+                                       n_grid_points=32, normalise=False, edgeless=True)
+        utils.save_mat_items(mat_path=feats_images_path, mat_items={'images': images})
 
     # Finally, run the classifier on the generated images.
-    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='lstm', batch_size=32,
+    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='cnn', batch_size=32,
                            num_epochs=10, reuse_cnn=False, dropout_rate=0.5, learning_rate_default=1e-3)
 
 
