@@ -89,6 +89,26 @@ def save_mat_items(mat_path: pathlib.Path, mat_items: Dict, append: bool = False
     sio.savemat(file_name=str(mat_path.absolute()), mdict=mat_items, appendmat=append)
 
 
+def get_dict_path(from_path: pathlib.Path, dictionary: Dict) -> pathlib.Path:
+
+    # Init the path from which the unique dict will originate.
+    dict_path = pathlib.Path(from_path)
+
+    # Create a path based on dictionary keys and values i.e. key: value//key: value/// etc.
+    for dict_key, dict_value in dictionary.items():
+
+        # The code automatically cleans up the serialised key and value instance via replace.
+        dict_path = dict_path.joinpath(('%s: %s' % (str(dict_key), str(dict_value)))
+                                       .replace('[', '')
+                                       .replace(']', '')
+                                       .replace('\'', ''))
+
+    _logger.debug('Generated path %s for dict %s from %s', str(dict_path.absolute()), str(dictionary),
+                  str(from_path.absolute()))
+
+    return dict_path
+
+
 def get_subj_epochs(subj_id, preload=True, equalise_event_ids=None, inc_subj_info_id=True):
 
     """
