@@ -44,7 +44,11 @@ def get_subjects_epochs(subject_id: int, preload: bool = True, equalise_event_id
 
 def get_epochs(subject_ids: List[int], preload: bool = True, equalise_event_ids: List[str] = None,
                add_subject_id_info: bool = True, drop_labels: List[int] = None) -> Dict[int, mne.Epochs]:
+
+    # Dictionary mapping subject ids to the loaded epochs.
     epochs = {}
+
+    # For each subject, load its epoch and store within the dictionary.
     for subject_id in np.sort(np.unique(subject_ids)):
         subjects_epochs = get_subjects_epochs(subject_id=subject_id, preload=preload,
                                               equalise_event_ids=equalise_event_ids,
@@ -52,6 +56,7 @@ def get_epochs(subject_ids: List[int], preload: bool = True, equalise_event_ids:
                                               drop_labels=drop_labels)
         epochs[subject_id] = subjects_epochs
         _logger.debug('Added Epochs for subject %d.', subject_id)
+
     return epochs
 
 
@@ -76,7 +81,7 @@ def drop_epochs_trails_by_labels(epochs: mne.Epochs, drop_labels: List[int]):
     _logger.debug('Number of labels after dropping %s is %d', str(drop_labels), len(trial_labels))
 
 
-def get_remapped_trails_labels(labels: Union[List, np.ndarray], new_labels: Dict[int, int]):
+def remap_trail_labels(labels: Union[List, np.ndarray], new_labels: Dict[int, int]):
 
     # Loop through all of the labels. If a new label exists, change it.
     for i in range(len(labels)):
