@@ -27,7 +27,7 @@ def main():
 
     # Attributes defining what data should be loaded.
     load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    drop_labels = None
+    drop_labels = [3]
     equalise_event_ids = ['Left', 'Right', 'Bimanual']
 
     # Read and load epochs that we are concerned with.
@@ -68,6 +68,16 @@ def main():
         feats = features.concat_features(windows=len(windows), epoch_feats=epoch_feats)
         utils.save_mat_items(mat_path=epoch_feats_path, mat_items={'feats': feats})
 
+    # Attributes defining image properties.
+    n_image_grid_points = 32
+    normalise_image = True
+    edgeless_image = True
+
+    # Append additional file name attributes enable the image to be identified.
+    file_name_attributes['n_image_grid_points'] = n_image_grid_points
+    file_name_attributes['normalise_image'] = normalise_image
+    file_name_attributes['edgeless_image'] = edgeless_image
+
     # The path where previously generates images are to be found.
     feats_images_path = pathlib.Path(pathlib.Path(__file__).parent.joinpath(
         'images//psd//%s.mat' % str(file_name_attributes)))
@@ -83,13 +93,16 @@ def main():
 
         _logger.info('Generating images for PSD features...')
 
-        # Generate images based on the generated features; then save them.
+        # Generate images based on the generated features.
         images = utils.generate_images(features=feats, electrode_locations=electrode_locations,
-                                       n_grid_points=32, normalise=False, edgeless=True)
+                                       n_grid_points=n_image_grid_points, normalise=normalise_image,
+                                       edgeless=edgeless_image)
+
+        # Save the images, preventing the need to generate them again.
         utils.save_mat_items(mat_path=feats_images_path, mat_items={'images': images})
 
     # Finally, run the classifier on the generated images.
-    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='lstm', batch_size=32,
+    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='cnn', batch_size=32,
                            num_epochs=10, reuse_cnn=False, dropout_rate=0.5, learning_rate_default=1e-3)
 
 
