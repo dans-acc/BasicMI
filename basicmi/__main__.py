@@ -42,7 +42,7 @@ def main():
 
     # The bands and windows defining the features that are to be extracted.
     bands = [(4, 8), (8, 12), (12, 30)]
-    windows = utils.generate_windows(start=-2, stop=5, step=7)
+    windows = utils.generate_windows(start=-2, stop=5, step=1)
 
     # Attributes that help uniquely identify files where features are held.
     file_name_attributes = {'Subjects': load_subjects, 'Equalised': equalise_event_ids, 'Dropped': drop_labels,
@@ -89,7 +89,7 @@ def main():
         utils.save_mat_items(mat_path=feats_images_path, mat_items={'images': images})
 
     # Finally, run the classifier on the generated images.
-    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='cnn', batch_size=32,
+    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='lstm', batch_size=32,
                            num_epochs=10, reuse_cnn=False, dropout_rate=0.5, learning_rate_default=1e-3)
 
 
