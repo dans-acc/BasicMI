@@ -26,7 +26,7 @@ def main():
     electrode_locations = montages.get_neuroscan_montage(apply_azim=True)
 
     # Attributes defining what data should be loaded.
-    load_subjects = [1, 2, 3]
+    load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     drop_labels = None
     equalise_event_ids = ['Left', 'Right', 'Bimanual']
 
@@ -42,7 +42,7 @@ def main():
 
     # The bands and windows defining the features that are to be extracted.
     bands = [(4, 8), (8, 12), (12, 30)]
-    windows = utils.generate_windows(start=-2, stop=5, step=7)
+    windows = utils.generate_windows(start=-2, stop=5, step=1)
 
     # Generate a path to where the features are to be stored; paths are unique.
     epoch_feats_path = utils.get_dict_path(from_path=pathlib.Path(pathlib.Path(__file__).parent.joinpath('features//psd')),
@@ -104,7 +104,7 @@ def main():
         utils.save_mat_items(mat_path=feats_images_path, mat_items={'images': images})
 
     # Finally, run the classifier on the generated images.
-    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='cnn', batch_size=32,
+    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='lstm', batch_size=32,
                            num_epochs=10, reuse_cnn=False, dropout_rate=0.5, learning_rate_default=1e-3)
 
 
