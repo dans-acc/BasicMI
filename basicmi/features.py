@@ -15,15 +15,6 @@ _logger = utils.create_logger(__name__, level=logging.DEBUG)
 def get_epoch_psd_features(subject_epochs: mne.Epochs, windows: List[Tuple[float, float]], bands: List[Tuple[float, float]],
                            n_jobs: int = 10) -> np.ndarray:
 
-    """
-    mtx = []
-    for window_idx in range(len(windows)):
-        samples = []
-        for epoch_idx in range(len(subject_epochs)):
-            samples.append([])
-        mtx.append(samples)
-    """
-
     # Feature matrix represents windows * samples (epochs) * features (theta, alpha, and beta bands)
     mtx = [[[] for epoch_idx in range(len(subject_epochs))] for window_inx in range(len(windows))]
 
@@ -40,7 +31,7 @@ def get_epoch_psd_features(subject_epochs: mne.Epochs, windows: List[Tuple[float
 
             # Returns a matrix in the shape of n_epochs, n_channels, n_freqs.
             psds, freqs = mne.time_frequency.psd_multitaper(inst=subject_epochs, tmin=t_min, tmax=t_max,
-                                                            fmin=f_min, fmax=f_max, proj=True, n_jobs=n_jobs)
+                                                            fmin=f_min, fmax=f_max, proj=False, n_jobs=n_jobs)
 
             # Loop through each epoch index, then each channel, adding the mean FFT PSD to the feature matrix.
             for epoch_idx in range(len(psds)):
