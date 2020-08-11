@@ -27,7 +27,7 @@ def main():
 
     # Attributes defining what data should be loaded.
     load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    drop_labels = [2]
+    drop_labels = [3]
     equalise_event_ids = ['Left', 'Right', 'Bimanual']
 
     # Read and load epochs that we are concerned with.
@@ -50,20 +50,20 @@ def main():
 
     # Path where previously generated features are to be found.
     epoch_feats_path = pathlib.Path(pathlib.Path(__file__).parent.joinpath(
-        'features//psd//%s.mat' % str(file_name_attributes).replace(' ', '')))
+        'features//psd//%s.mat' % str(file_name_attributes)
+        .replace(' ', '').replace('\'', '').replace('{', '').replace('}', '')))
 
     # Determine if the features have already been generated.
     if epoch_feats_path.exists():
 
-        _logger.info('Loading PSD features...')
-
         # Load the previously saved features; optimises runs because they do not need to be generated each time.
+        _logger.info('Loading PSD features...')
         feats = utils.read_mat_items(mat_path=epoch_feats_path, mat_keys=['feats'])['feats']
+
     else:
 
-        _logger.info('Generating PSD features...')
-
         # Generate features for all of the loaded epochs; concatenate them into one (indexed by windows); then save them
+        _logger.info('Generating PSD features...')
         epoch_feats = features.get_psd_features(epochs=epochs, windows=windows, bands=bands)
         feats = features.concat_features(windows=len(windows), epoch_feats=epoch_feats)
         utils.save_mat_items(mat_path=epoch_feats_path, mat_items={'feats': feats})
@@ -80,25 +80,23 @@ def main():
 
     # The path where previously generates images are to be found.
     feats_images_path = pathlib.Path(pathlib.Path(__file__).parent.joinpath(
-        'images//psd//%s.mat' % str(file_name_attributes).replace(' ', '')))
+        'images//psd//%s.mat' % str(file_name_attributes)
+        .replace(' ', '').replace('\'', '').replace('{', '').replace('}', '')))
 
     # Determine if the images have already been generated for the features.
     if feats_images_path.exists():
 
-        _logger.info('Loading images for PSD features...')
-
         # Load the previously saved images; optimises runs because they do not need to be generated each time.
+        _logger.info('Loading images for PSD features...')
         images = utils.read_mat_items(mat_path=feats_images_path, mat_keys=['images'])['images']
+
     else:
 
+        # Generate images and then store them; optimises subsequent runs because they do not need to be generated again.
         _logger.info('Generating images for PSD features...')
-
-        # Generate images based on the generated features.
         images = utils.generate_images(features=feats, electrode_locations=electrode_locations,
                                        n_grid_points=n_image_grid_points, normalise=normalise_image,
                                        edgeless=edgeless_image)
-
-        # Save the images, preventing the need to generate them again.
         utils.save_mat_items(mat_path=feats_images_path, mat_items={'images': images})
 
     # Finally, run the classifier on the generated images.
