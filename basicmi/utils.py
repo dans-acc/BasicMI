@@ -1,7 +1,7 @@
 import pathlib
 import logging
 
-from typing import List
+from typing import List, Dict
 
 import mne
 import EEGLearn.utils as eeg_utils
@@ -26,15 +26,15 @@ MNE_LAYOUTS_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/layouts
 MNE_MONTAGES_DIR_PATH = pathlib.Path(MNE_DIR_PATH.joinpath('channels/data/montages'))
 
 
-def create_logger(name, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG):
+def create_logger(name: str, fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG):
 
     # Console Handler formatter.
-    fmt = logging.Formatter(fmt=format)
+    fmttr = logging.Formatter(fmt=fmt)
 
     # Console handler (for displaying the messages on screen.)
     ch = logging.StreamHandler()
     ch.setLevel(level=level)
-    ch.setFormatter(fmt=fmt)
+    ch.setFormatter(fmt=fmttr)
 
     # Init the console logger.
     logger = logging.getLogger(name)
@@ -74,6 +74,19 @@ def read_mat_items(mat_path, mat_keys=None):
     # Return only the defined mat keys from the file.
     _logger.debug('Parameter mat_keys is %s. Returning all mat_keys key-value pairs.', mat_keys)
     return {key: mat_file_dict.get(key) for key in mat_keys}
+
+
+def save_mat_items(mat_path: pathlib.Path, mat_items: Dict, append: bool = False):
+
+    _logger.info('Saving %s to %s.', str(mat_items), str(mat_path.absolute()))
+
+    # Create directories if they do not exist (otherwise scipy throws an error when saving.)
+    if not mat_path.exists():
+        _logger.debug('Creating directories for: %s.', str(mat_path.absolute()))
+        mat_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Finally save the mat_items as a .mat file.
+    sio.savemat(file_name=str(mat_path.absolute()), mdict=mat_items, appendmat=append)
 
 
 def get_subj_epochs(subj_id, preload=True, equalise_event_ids=None, inc_subj_info_id=True):
