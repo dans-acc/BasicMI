@@ -26,8 +26,8 @@ def main():
     electrode_locations = montages.get_neuroscan_montage(apply_azim=True)
 
     # Attributes defining what data should be loaded.
-    load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    drop_labels = [3]
+    load_subjects = [1, 2, 3]
+    drop_labels = None
     equalise_event_ids = ['Left', 'Right', 'Bimanual']
 
     # Read and load epochs that we are concerned with.
@@ -42,16 +42,17 @@ def main():
 
     # The bands and windows defining the features that are to be extracted.
     bands = [(4, 8), (8, 12), (12, 30)]
-    windows = utils.generate_windows(start=-2, stop=5, step=1)
+    windows = utils.generate_windows(start=-2, stop=5, step=7)
 
-    # Attributes that help uniquely identify files where features are held.
-    file_name_attributes = {'Subj': load_subjects, 'Equalised': equalise_event_ids, 'Drop': drop_labels,
-                            'Bands': bands, 'Win': windows}
-
-    # Path where previously generated features are to be found.
-    epoch_feats_path = pathlib.Path(pathlib.Path(__file__).parent.joinpath(
-        'features//psd//%s.mat' % str(file_name_attributes)
-        .replace(' ', '').replace('\'', '').replace('{', '').replace('}', '')))
+    # Generate a path to where the features are to be stored; paths are unique.
+    epoch_feats_path = utils.get_dict_path(from_path=pathlib.Path(pathlib.Path(__file__).parent.joinpath('features//psd')),
+                                           dictionary={
+                                               'Subjects': load_subjects,
+                                               'Equalised': equalise_event_ids,
+                                               'Dropped': drop_labels,
+                                               'Bands': bands,
+                                               'Windows': windows
+                                           }).joinpath('features.mat')
 
     # Determine if the features have already been generated.
     if epoch_feats_path.exists():
@@ -73,15 +74,18 @@ def main():
     normalise_image = True
     edgeless_image = True
 
-    # Append additional file name attributes enable the image to be identified.
-    file_name_attributes['points'] = n_image_grid_points
-    file_name_attributes['normalise'] = normalise_image
-    file_name_attributes['edgeless'] = edgeless_image
-
-    # The path where previously generates images are to be found.
-    feats_images_path = pathlib.Path(pathlib.Path(__file__).parent.joinpath(
-        'images//psd//%s.mat' % str(file_name_attributes)
-        .replace(' ', '').replace('\'', '').replace('{', '').replace('}', '')))
+    # Generate a new path to where images are stored.
+    feats_images_path = utils.get_dict_path(from_path=pathlib.Path(pathlib.Path(__file__).parent.joinpath('images//psd')),
+                                            dictionary={
+                                                'Subjects': load_subjects,
+                                                'Equalised': equalise_event_ids,
+                                                'Dropped': drop_labels,
+                                                'Bands': bands,
+                                                'Windows': windows,
+                                                'Points': n_image_grid_points,
+                                                'Normalise': normalise_image,
+                                                'Edgeless': edgeless_image
+                                            }).joinpath('images.mat')
 
     # Determine if the images have already been generated for the features.
     if feats_images_path.exists():
@@ -100,7 +104,7 @@ def main():
         utils.save_mat_items(mat_path=feats_images_path, mat_items={'images': images})
 
     # Finally, run the classifier on the generated images.
-    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='lstm', batch_size=32,
+    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='cnn', batch_size=32,
                            num_epochs=10, reuse_cnn=False, dropout_rate=0.5, learning_rate_default=1e-3)
 
 
