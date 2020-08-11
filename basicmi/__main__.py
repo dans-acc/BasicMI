@@ -2,6 +2,7 @@ import EEGLearn.utils as eeg_utils
 import EEGLearn.train as eeg_train
 
 import logging
+import os
 
 import mne
 import tensorflow as tf
@@ -25,21 +26,22 @@ def main():
 
     # Attributes defining what data should be loaded.
     load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    drop_labels = None
     equalise_event_ids = ['Left', 'Right', 'Bimanual']
 
     # Read and load epochs that we are concerned with.
     epochs = subjects.get_epochs(subject_ids=load_subjects, preload=True, equalise_event_ids=equalise_event_ids,
-                                 add_subject_id_info=True)
+                                 add_subject_id_info=True, drop_labels=drop_labels)
 
     # Generate leave one out cross validation fold pairs based on the loaded epochs.
     trial_ids, trial_labels, fold_pairs = subjects.get_loocv_fold_pairs(epochs=epochs)
 
-    # Labels must start from 0 (since for us they start at 1, sub 1 from each label.)
-    trial_labels = np.array([label-1 for label in trial_labels])
+    # Since class labels must start at 1; remap the values such that the meet the latter requirement.
+    subjects.remap_trail_labels(trial_labels, new_labels={1: 0, 2: 1, 3: 2})
 
     # The bands and windows defining the features that are to be extracted.
-    bands = [(4, 8), (8, 13), (13, 30)]
-    windows = utils.generate_windows(start=0, stop=5, step=5)
+    bands = [(4, 8), (8, 12), (12, 30)]
+    windows = utils.generate_windows(start=-2, stop=5, step=7)
 
     # Generate PSD features for all of the loaded epochs; then concatenate them into one.
     epoch_feats = features.get_psd_features(epochs=epochs, windows=windows, bands=bands)
@@ -47,12 +49,18 @@ def main():
 
     # Generate images based on the generated features.
     images = utils.generate_images(features=feats, electrode_locations=electrode_locations, n_grid_points=32,
-                                   normalise=True, edgeless=True)
+                                   normalise=False, edgeless=True)
 
     # Finally, run the classifier on the generated images.
-    train.train_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='cnn', batch_size=32,
-                      num_epochs=30)
+    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='cnn', batch_size=32,
+                           num_epochs=10, reuse_cnn=False, dropout_rate=0.5, learning_rate_default=1e-3)
 
 
 if __name__ == '__main__':
+
+    # Set tensorflow attributes.
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+    # Run the classification algorithm.
     main()
