@@ -42,7 +42,7 @@ def main():
 
     # The bands and windows defining the features that are to be extracted.
     bands = [(4, 8), (8, 12), (12, 30)]
-    windows = utils.generate_windows(start=-2, stop=5, step=1)
+    windows = utils.generate_windows(start=-2, stop=5, step=7)
 
     # Generate a path to where the features are to be stored; paths are unique.
     epoch_feats_path = utils.get_dict_path(from_path=pathlib.Path(pathlib.Path(__file__).parent.joinpath('features//psd')),
@@ -103,9 +103,25 @@ def main():
                                        edgeless=edgeless_image)
         utils.save_mat_items(mat_path=feats_images_path, mat_items={'images': images})
 
+    # Model parameters.
+    model_type = 'cnn'
+    reuse_cnn = False
+
+    batch_size = 32
+    num_epochs = 20
+
+    learning_rate_default = 1e-3
+    learning_rate = 1e-4 / 32 * batch_size
+
+    dropout_rate = 0.3
+    decay_rate = 0.75
+    weight_decay = 1e-3
+
     # Finally, run the classifier on the generated images.
-    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type='lstm', batch_size=32,
-                           num_epochs=10, reuse_cnn=False, dropout_rate=0.5, learning_rate_default=1e-3)
+    train.train_eegl_model(images=images, labels=trial_labels, folds=fold_pairs, model_type=model_type,
+                           reuse_cnn=reuse_cnn, batch_size=batch_size, num_epochs=num_epochs,
+                           learning_rate_default=learning_rate_default, learning_rate=learning_rate,
+                           dropout_rate=dropout_rate, decay_rate=decay_rate, weight_decay=weight_decay)
 
 
 if __name__ == '__main__':
