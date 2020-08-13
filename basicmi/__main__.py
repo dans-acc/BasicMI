@@ -15,6 +15,14 @@ from basicmi import montages, subjects, utils, features, train
 _logger = utils.create_logger(name=__name__, level=logging.DEBUG)
 
 
+def load_or_generate_fif_feats():
+    pass
+
+
+def load_or_generate_mat_feats():
+    pass
+
+
 def main():
 
     # Init library pseudo random number generators.
@@ -42,7 +50,7 @@ def main():
 
     # The bands and windows defining the features that are to be extracted.
     bands = [(4, 8), (8, 12), (12, 30)]
-    windows = utils.generate_windows(start=-2, stop=5, step=0.35)
+    windows = utils.generate_windows(start=-2, stop=5, step=0.2)
 
     try:
 
@@ -65,8 +73,6 @@ def main():
         # Cannot save nor load the features (dictionary names are too long).
         _logger.debug('Cannot load nor save features - invalid path.')
         epoch_feats_path = None
-
-    print('Is none: %s' % epoch_feats_path)
 
     # Determine if the features have already been generated.
     if epoch_feats_path is not None and epoch_feats_path.exists():
@@ -142,7 +148,7 @@ def main():
     reuse_cnn = False
 
     batch_size = 32
-    num_epochs = 3500
+    num_epochs = 6000
 
     learning_rate_default = 1e-4
     learning_rate = 1e-4 / 32 * batch_size
