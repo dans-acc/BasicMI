@@ -31,7 +31,11 @@ def load_or_generate_fif_feats(dataset: str = '2020', load_subjects: List[int] =
 
     # If the subjects that are to be loaded does not match, assume all are being loaded.
     if load_subjects is None:
-        load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        if dataset == '2020':
+            load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        elif dataset == '2014':
+            load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        _logger.debug('Load subjects is None. Using default %s dataset subjects: %s', dataset, str(load_subjects))
 
     # Read and load epochs that we are concerned with.
     epochs = subjects.get_epochs(dataset=dataset, subject_ids=load_subjects, preload=True,
