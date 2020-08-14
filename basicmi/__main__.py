@@ -44,6 +44,7 @@ def load_or_generate_fif_feats(dataset: str = '2020', load_subjects: List[int] =
     # If none, the default assumes all classes are present.
     if new_trial_labels is None:
         new_trial_labels = {1: 0, 2: 1, 3: 2}
+        _logger.debug('New trial labels is None. Using default trial labels: %s', str(new_trial_labels))
 
     # Since class labels must start at 1; remap the values such that the meet the latter requirement.
     subjects.remap_trail_labels(trial_labels, new_labels=new_trial_labels)
@@ -55,6 +56,7 @@ def load_or_generate_fif_feats(dataset: str = '2020', load_subjects: List[int] =
     # If there are no windows present, generate default ones.
     if windows is None:
         windows = utils.generate_windows(start=-2, stop=5, step=1)
+        _logger.debug('Windows is None. Using default windows: %s', str(windows))
 
     try:
 
@@ -168,13 +170,13 @@ def main():
     # Attributes defining what data should be loaded.
     dataset = '2020'
     load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    drop_labels = [3]
+    drop_labels = None
     equalise_event_ids = None
     new_trial_labels = {1: 0, 2: 1, 3: 2}
 
     # The bands and windows defining the features that are to be extracted.
     bands = [(4, 8), (8, 12), (12, 30)]
-    windows = utils.generate_windows(start=-2, stop=5, step=1)
+    windows = utils.generate_windows(start=-2, stop=5, step=7)
 
     # Attributes defining image properties.
     n_image_grid_points = 32
@@ -193,7 +195,7 @@ def main():
                                                                   electrode_locations=electrode_locations)
 
     # Model parameters.
-    model_type = 'lstm'
+    model_type = 'cnn'
     reuse_cnn = False
 
     batch_size = 32
