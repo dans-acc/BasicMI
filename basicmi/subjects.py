@@ -12,14 +12,14 @@ from basicmi import utils
 _logger = utils.create_logger(name=__name__, level=logging.DEBUG)
 
 
-def get_subjects_epochs(subject_id: int, preload: bool = True, equalise_event_ids: List[str] = None,
+def get_subjects_epochs(dataset: str, subject_id: int, preload: bool = True, equalise_event_ids: List[str] = None,
                         add_subject_id_info: bool = True, drop_labels: List[int] = None) -> mne.Epochs:
 
     _logger.info('Loading Epochs for subject %d.', subject_id)
 
     # Read the subjects epoch data.
     subjects_path = pathlib.Path(pathlib.Path(__file__).parent
-                                 .joinpath('resources//subjects//S%d//epochs_epo.fif' % subject_id))
+                                 .joinpath('resources//subjects//%s//S%d//epochs_epo.fif' % (dataset, subject_id)))
     subjects_epochs = mne.read_epochs(fname=str(subjects_path.absolute()), preload=preload)
 
     _logger.info('Epochs loaded for subject %d.', subject_id)
@@ -42,7 +42,7 @@ def get_subjects_epochs(subject_id: int, preload: bool = True, equalise_event_id
     return subjects_epochs
 
 
-def get_epochs(subject_ids: List[int], preload: bool = True, equalise_event_ids: List[str] = None,
+def get_epochs(dataset: str, subject_ids: List[int], preload: bool = True, equalise_event_ids: List[str] = None,
                add_subject_id_info: bool = True, drop_labels: List[int] = None) -> Dict[int, mne.Epochs]:
 
     # Dictionary mapping subject ids to the loaded epochs.
@@ -50,10 +50,12 @@ def get_epochs(subject_ids: List[int], preload: bool = True, equalise_event_ids:
 
     # For each subject, load its epoch and store within the dictionary.
     for subject_id in np.sort(np.unique(subject_ids)):
-        subjects_epochs = get_subjects_epochs(subject_id=subject_id, preload=preload,
+        subjects_epochs = get_subjects_epochs(dataset=dataset, subject_id=subject_id, preload=preload,
                                               equalise_event_ids=equalise_event_ids,
                                               add_subject_id_info=add_subject_id_info,
                                               drop_labels=drop_labels)
+
+        # Store the loaded epochs under the subject key.
         epochs[subject_id] = subjects_epochs
         _logger.debug('Added Epochs for subject %d.', subject_id)
 
@@ -83,11 +85,11 @@ def drop_epochs_trails_by_labels(epochs: mne.Epochs, drop_labels: List[int]):
 
 def remap_trail_labels(labels: Union[List, np.ndarray], new_labels: Dict[int, int]):
 
-    # Loop through all of the labels. If a new label exists, change it.
+    # Loop through all of the labels. If a 2014 label exists, change it.
     for i in range(len(labels)):
         if labels[i] in new_labels:
 
-            # Change the old label to the new label.
+            # Change the 2020 label to the 2014 label.
             _logger.debug('Changing %d at %d to %d', labels[i], i, new_labels[labels[i]])
             labels[i] = new_labels[labels[i]]
 
