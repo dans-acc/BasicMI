@@ -39,6 +39,8 @@ def get_subjects_epochs(dataset: str, subject_id: int, preload: bool = True, equ
     if drop_labels is not None:
         drop_epochs_trails_by_labels(epochs=subjects_epochs, drop_labels=drop_labels)
 
+    _logger.debug('Loaded Epochs for subject: %d\n%s', subject_id, str(subjects_epochs.info))
+
     return subjects_epochs
 
 
