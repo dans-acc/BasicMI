@@ -17,24 +17,23 @@ from basicmi import montages, subjects, utils, features, train
 _logger = utils.create_logger(name=__name__, level=logging.DEBUG)
 
 
-def load_or_generate_fif_feats(dataset: str = '2020', load_subjects: List[int] = None, drop_labels: List[int] = None,
+def load_or_generate_fif_feats(dataset: str, load_subjects: List[int] = None, drop_labels: List[int] = None,
                                equalise_event_ids: List[str] = None, new_trial_labels: Dict[int, int] = None,
-                               bands: List[Tuple[int, int]] = None, windows: List[Tuple[float, float]] = None,
-                               n_image_grid_points: int = 32, normalise_image: bool = True, edgeless_image: bool = True,
-                               electrode_locations: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-
-    # If the dataset is none, assume the latest dataset is being used.
-    if dataset is None:
-        dataset = '2020'
+                               bands: List[Tuple[int, int]] = None, win_start: float = 0.5, win_stop: float = 5,
+                               win_step: float = 0.5, n_image_grid_points: int = 32, normalise_image: bool = True,
+                               edgeless_image: bool = True, electrode_locations: np.ndarray = None) \
+        -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
 
     _logger.info('Loading or generating features and images using the .FIF and MNE (using the %s dataset)', dataset)
 
     # If the subjects that are to be loaded does not match, assume all are being loaded.
     if load_subjects is None:
-        if dataset == '2020':
+        if dataset == '2020_1':
             load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-        elif dataset == '2014':
+        elif dataset == '2014_1':
             load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        else:
+            raise ValueError('Invalid dataset: %s' % dataset)
         _logger.debug('Load subjects is None. Using default %s dataset subjects: %s', dataset, str(load_subjects))
 
     # Read and load epochs that we are concerned with.
@@ -57,10 +56,8 @@ def load_or_generate_fif_feats(dataset: str = '2020', load_subjects: List[int] =
     if bands is None:
         bands = [(4, 8), (8, 12), (12, 30)]
 
-    # If there are no windows present, generate default ones.
-    if windows is None:
-        windows = utils.generate_windows(start=-2, stop=5, step=1)
-        _logger.debug('Windows is None. Using default windows: %s', str(windows))
+    # Generate windows for the features.
+    windows = utils.generate_windows(start=win_start, stop=win_stop, step=win_step)
 
     try:
 
@@ -73,7 +70,9 @@ def load_or_generate_fif_feats(dataset: str = '2020', load_subjects: List[int] =
                 'Equalised': equalise_event_ids,
                 'Dropped': drop_labels,
                 'Bands': bands,
-                'Windows': windows
+                'Start': win_start,
+                'Stop': win_stop,
+                'Step': win_step,
             }).joinpath('features.mat')
 
         # This call forces a filename check (to make sure its valid).
@@ -107,7 +106,7 @@ def load_or_generate_fif_feats(dataset: str = '2020', load_subjects: List[int] =
 
     try:
 
-        # Generate a 2014 path to where images are stored.
+        # Generate a 2014_1 path to where images are stored.
         feats_images_path = utils.get_dict_path(
             from_path=pathlib.Path(pathlib.Path(__file__).parent.joinpath('images//psd')),
             dictionary={
@@ -116,7 +115,9 @@ def load_or_generate_fif_feats(dataset: str = '2020', load_subjects: List[int] =
                 'Equalised': equalise_event_ids,
                 'Dropped': drop_labels,
                 'Bands': bands,
-                'Windows': windows,
+                'Start': win_start,
+                'Stop': win_stop,
+                'Step': win_step,
                 'Points': n_image_grid_points,
                 'Normalise': normalise_image,
                 'Edgeless': edgeless_image
@@ -172,34 +173,37 @@ def main():
     electrode_locations = montages.get_neuroscan_montage(apply_azim=True)
 
     # Attributes defining what data should be loaded.
-    dataset = '2020'
-    load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    drop_labels = None
+    dataset = '2014_2'
+    load_subjects = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    drop_labels = [4, 5, 6, 7]
     equalise_event_ids = None
     new_trial_labels = {1: 0, 2: 1, 3: 2}
 
     # The bands and windows defining the features that are to be extracted.
     bands = [(4, 8), (8, 12), (12, 30)]
-    windows = utils.generate_windows(start=-2, stop=5, step=7)
+    win_start = 0.5
+    win_stop = 5
+    win_step = 0.5
 
     # Attributes defining image properties.
     n_image_grid_points = 32
     normalise_image = True
-    edgeless_image = False
+    edgeless_image = True
 
     # Generate the images, labels and folds associated with prior parameters.
     images, trial_labels, fold_pairs = load_or_generate_fif_feats(dataset=dataset, load_subjects=load_subjects,
                                                                   drop_labels=drop_labels,
                                                                   equalise_event_ids=equalise_event_ids,
                                                                   new_trial_labels=new_trial_labels, bands=bands,
-                                                                  windows=windows,
+                                                                  win_start=win_start, win_stop=win_stop,
+                                                                  win_step=win_step,
                                                                   n_image_grid_points=n_image_grid_points,
                                                                   normalise_image=normalise_image,
                                                                   edgeless_image=edgeless_image,
                                                                   electrode_locations=electrode_locations)
 
     # Model parameters.
-    model_type = 'cnn'
+    model_type = 'lstm'
     reuse_cnn = False
 
     batch_size = 32
