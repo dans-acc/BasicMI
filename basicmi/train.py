@@ -67,6 +67,10 @@ def train_eegl_model(images: np.ndarray, labels: np.ndarray, folds: np.ndarray, 
         last_validation_accuracies.append(fold_result[3])
         last_test_accuracies.append(fold_result[4])
 
+    _logger.info('\n')
+    _logger.info('*' * 150)
+    _logger.info('\n')
+
     # Summarise the last training accuracies.
     _logger.info('Mean last training accuracy: %.16f; last training accuracy std: %.16f',
                  np.mean(last_training_accuracies),
