@@ -87,11 +87,11 @@ def drop_epochs_trails_by_labels(epochs: mne.Epochs, drop_labels: List[int]):
 
 def remap_trail_labels(labels: Union[List, np.ndarray], new_labels: Dict[int, int]):
 
-    # Loop through all of the labels. If a 2014 label exists, change it.
+    # Loop through all of the labels. If a 2014_1 label exists, change it.
     for i in range(len(labels)):
         if labels[i] in new_labels:
 
-            # Change the 2020 label to the 2014 label.
+            # Change the 2020_1 label to the 2014_1 label.
             _logger.debug('Changing %d at %d to %d', labels[i], i, new_labels[labels[i]])
             labels[i] = new_labels[labels[i]]
 
