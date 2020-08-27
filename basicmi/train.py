@@ -43,20 +43,52 @@ def train_eegl_model(images: np.ndarray, labels: np.ndarray, folds: np.ndarray, 
 
     # Print the results for each subject.
     for i in range(len(results)):
-        _logger.info('Best validation accuracy: %.16f; test accuracy: %.16f', results[i][1], results[i][2])
+        _logger.info('Last train accuracy: %.16f; best validation accuracy: %.16f; test accuracy: %.16f; '
+                     'last validation accuracy: %.16f; last test accuracy: %.16f',
+                     results[i][0],
+                     results[i][1],
+                     results[i][2],
+                     results[i][3],
+                     results[i][4])
 
     # Extract the validation and test accuracies.
-    validation_accuracies = []
+    last_training_accuracies = []
+    best_validation_accuracies = []
     test_accuracies = []
+    last_validation_accuracies = []
+    last_test_accuracies = []
 
+    # Populate the lists for obtaining mean and std etc.
     for fold_result in results:
-        validation_accuracies.append(fold_result[1])
+        last_training_accuracies.append(fold_result[0])
+        best_validation_accuracies.append(fold_result[1])
         test_accuracies.append(fold_result[2])
+        last_validation_accuracies.append(fold_result[3])
+        last_test_accuracies.append(fold_result[4])
 
-    # Print the final summary.
-    _logger.info('Mean validation accuracy: %.16f; validation accuracy std: %.16f', np.mean(validation_accuracies),
-                 np.std(validation_accuracies))
+    # Summarise the last training accuracies.
+    _logger.info('Mean last training accuracy: %.16f; last training accuracy std: %.16f',
+                 np.mean(last_training_accuracies),
+                 np.std(last_training_accuracies))
 
-    _logger.info('Mean test accuracy: %.16f; test accuracy std: %.16f', np.mean(test_accuracies), np.std(test_accuracies))
+    # Summarise the best validation accuracies.
+    _logger.info('Mean best validation accuracy: %.16f; best validation accuracy std: %.16f',
+                 np.mean(best_validation_accuracies),
+                 np.std(best_validation_accuracies))
+
+    # Summarise the test accuracies.
+    _logger.info('Mean test accuracy: %.16f; test accuracy std: %.16f',
+                 np.mean(test_accuracies),
+                 np.std(test_accuracies))
+
+    # Summarise the last validation accuracies.
+    _logger.info('Mean last validation accuracy: %.16f; last validation accuracy std: %.16f',
+                 np.mean(last_validation_accuracies),
+                 np.std(last_validation_accuracies))
+
+    # Summarise the last test accuracies.
+    _logger.info('Mean last test accuracy: %.16f; last test accuracy std: %.16f',
+                 np.mean(last_test_accuracies),
+                 np.std(last_test_accuracies))
 
     return results
