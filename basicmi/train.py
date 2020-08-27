@@ -43,8 +43,9 @@ def train_eegl_model(images: np.ndarray, labels: np.ndarray, folds: np.ndarray, 
 
     # Print the results for each subject.
     for i in range(len(results)):
-        _logger.info('Last train accuracy: %.16f; best validation accuracy: %.16f; test accuracy: %.16f; '
+        _logger.info('FOLD (%d) Last train accuracy: %.16f; best validation accuracy: %.16f; test accuracy: %.16f; '
                      'last validation accuracy: %.16f; last test accuracy: %.16f',
+                     i,
                      results[i][0],
                      results[i][1],
                      results[i][2],
